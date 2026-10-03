@@ -1,0 +1,133 @@
+/* ============================================
+   PLANETARY SIM — Design Tokens
+   ============================================ */
+
+:root {
+  /* ---- Colors: Space ---- */
+  --space-void: #0B0E1A;
+  --space-deep: #101528;
+  --space-mid: #1A1F35;
+  --space-glow: #2A3055;
+
+  /* ---- Colors: Planet Warm ---- */
+  --cream: #FFF8E7;
+  --cream-warm: #FFF3D6;
+  --cream-soft: #FFFDF7;
+  --parchment: #F5ECD7;
+  --wood: #8B7355;
+  --wood-dark: #6B5640;
+  --wood-light: #A89070;
+
+  /* ---- Colors: Biome ---- */
+  --patch-grass: #7EAB6E;
+  --patch-grass-dark: #5C8A4C;
+  --patch-sand: #D4C49A;
+  --patch-sand-warm: #E5D5A8;
+  --water-shallow: #6EC8D4;
+  --water-deep: #2A7A8A;
+  --water-foam: #E0F4F4;
+
+  /* ---- Colors: Accent ---- */
+  --mint: #7ED4A8;
+  --mint-glow: #A0E8C4;
+  --astral-gold: #FFD475;
+  --astral-warm: #FFBF42;
+  --aura-cool: #6E8FAB;
+  --aura-warm: #D4A06E;
+  --spark: #FFF4CC;
+
+  /* ---- Colors: UI ---- */
+  --text-space: #C8CBDF;
+  --text-cream: #3D3529;
+  --text-muted: #7A7060;
+  --text-heading: #2C2418;
+  --border-subtle: rgba(139, 115, 85, 0.15);
+  --border-space: rgba(200, 203, 223, 0.12);
+
+  /* ---- Typography ---- */
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body: 'Outfit', system-ui, -apple-system, sans-serif;
+
+  --text-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.8rem);
+  --text-sm: clamp(0.8rem, 0.75rem + 0.3vw, 0.925rem);
+  --text-base: clamp(0.95rem, 0.88rem + 0.35vw, 1.1rem);
+  --text-lg: clamp(1.15rem, 1.05rem + 0.5vw, 1.35rem);
+  --text-xl: clamp(1.4rem, 1.2rem + 1vw, 1.8rem);
+  --text-2xl: clamp(1.8rem, 1.5rem + 1.5vw, 2.6rem);
+  --text-3xl: clamp(2.2rem, 1.8rem + 2vw, 3.4rem);
+  --text-hero: clamp(2.6rem, 2rem + 3vw, 4.5rem);
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.75;
+
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* ---- Spacing ---- */
+  --space-3xs: clamp(0.25rem, 0.2rem + 0.15vw, 0.35rem);
+  --space-2xs: clamp(0.5rem, 0.45rem + 0.25vw, 0.65rem);
+  --space-xs: clamp(0.75rem, 0.65rem + 0.5vw, 1rem);
+  --space-sm: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+  --space-md: clamp(1.5rem, 1.3rem + 1vw, 2rem);
+  --space-lg: clamp(2rem, 1.7rem + 1.5vw, 3rem);
+  --space-xl: clamp(3rem, 2.5rem + 2.5vw, 4.5rem);
+  --space-2xl: clamp(4rem, 3.2rem + 4vw, 7rem);
+  --space-3xl: clamp(6rem, 5rem + 5vw, 10rem);
+
+  /* ---- Radii ---- */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 32px;
+  --radius-pill: 999px;
+
+  /* ---- Shadows ---- */
+  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-medium: 0 4px 24px rgba(0, 0, 0, 0.1);
+  --shadow-glow-mint: 0 0 20px rgba(126, 212, 168, 0.25);
+  --shadow-glow-gold: 0 0 20px rgba(255, 212, 117, 0.3);
+
+  /* ---- Transitions ---- */
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-glacial: 800ms;
+
+  /* ---- Z-Index Scale ---- */
+  --z-canvas: 1;
+  --z-hero-dom: 10;
+  --z-threshold: 15;
+  --z-interior: 20;
+  --z-header: 50;
+  --z-skip: 100;
+
+  /* ---- Layout ---- */
+  --content-max: 72rem;
+  --content-narrow: 48rem;
+  --content-tight: 36rem;
+  --gutter: clamp(1.25rem, 1rem + 2vw, 3rem);
+}
+
+/* ---- Dark mode overrides (space sections) ---- */
+[data-theme="space"] {
+  --bg: var(--space-void);
+  --text-primary: var(--text-space);
+  --text-secondary: rgba(200, 203, 223, 0.65);
+  --border: var(--border-space);
+}
+
+/* ---- Light mode (interior sections) ---- */
+[data-theme="cream"] {
+  --bg: var(--cream);
+  --text-primary: var(--text-cream);
+  --text-secondary: var(--text-muted);
+  --border: var(--border-subtle);
+}
