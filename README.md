@@ -36,16 +36,16 @@ Landing page oficial de pitch para **Planetary Sim**, desarrollada con **Three.j
 
 ```bash
 # 1. Instalar dependencias
-npm install
+pnpm install
 
 # 2. Iniciar servidor de desarrollo
-npm run dev
+pnpm dev
 
 # 3. Compilar para producción
-npm run build
+pnpm build
 
 # 4. Previsualizar compilación
-npm run preview
+pnpm preview
 ```
 
 ---
