@@ -127,7 +127,7 @@ p {
 
 .btn--primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 32px rgba(126, 212, 168, 0.4);
+  box-shadow: 0 0 32px rgba(95, 198, 165, 0.4);
 }
 
 .btn--ghost {
@@ -191,7 +191,8 @@ p {
 .planet-canvas-wrap canvas {
   width: 100% !important;
   height: 100% !important;
-  pointer-events: auto;
+  display: block;
+  pointer-events: none;
 }
 
 /* ---- Zoom spacer ---- */

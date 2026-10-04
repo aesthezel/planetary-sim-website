@@ -1,6 +1,7 @@
 import { Header } from './components/Header';
 import { ZoomSequence } from './components/ZoomSequence';
 import { InteriorIntro } from './components/InteriorIntro';
+import { DesktopCompanion } from './components/DesktopCompanion';
 import { LoopSteps } from './components/LoopSteps';
 import { Traits } from './components/Traits';
 import { Phases } from './components/Phases';
@@ -30,6 +31,7 @@ export function App() {
         <div id="interior-bg" class="interior">
           <div class="interior__grain" aria-hidden="true" />
           <InteriorIntro />
+          <DesktopCompanion />
           <LoopSteps />
           <Traits />
           <Phases />

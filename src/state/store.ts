@@ -1,10 +1,9 @@
-import { signal, computed } from '@preact/signals';
+import { signal } from '@preact/signals';
 
-/** Zoom progress: 0 = orbit, 1 = fully inside */
-export const zoomProgress = signal(0);
-
-/** Whether the user has "entered" the planet (past threshold) */
-export const entered = computed(() => zoomProgress.value >= 0.78);
+/** Pinned orbital feature-story progress: 0 = opening, 1 = final feature. */
+export const storyProgress = signal(0);
+/** Active informational beat in the pinned orbital introduction (0 = opening). */
+export const storyStep = signal(0);
 
 /** Demo eones counter for animation */
 export const eonesDemo = signal(0);
@@ -19,8 +18,15 @@ export const prefersReducedMotion = signal(
     : false,
 );
 
-/** Header visibility (shows after entering) */
-export const headerVisible = signal(false);
+/** Desktop companion demo (mirrors Unity WindowHandler + OrbitalRing) */
+export type LayerMode = 'top' | 'normal' | 'bottom';
+export const companionLayer = signal<LayerMode>('top');
+export const companionTransparent = signal(true);
+export const companionClickThrough = signal(true);
+export const companionEones = signal(0);
+export const companionIslands = signal(1);
+export const companionPopulation = signal(0);
+export const companionAwake = signal(false);
 
 // Listen for reduced motion changes
 if (typeof window !== 'undefined') {

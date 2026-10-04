@@ -2,9 +2,9 @@
  * planetFactory.ts — Builds the procedural planet scene.
  *
  * Components (from plan):
- * - Planet core: IcosahedronGeometry with toon material
+ * - Planet core: smooth sphere with softly banded toon material
  * - Water: sphere r=1.02 with custom shader
- * - Islands: 5-7 blobs (flattened sphere + cone)
+ * - Islands: 5-7 thin organic coastline and land patches
  * - Boat: ultra-low-poly box + prism orbiting
  * - Aura: BackSide sphere r=1.08
  * - Atmosphere: sphere r=1.15 (grows during zoom)
@@ -18,7 +18,6 @@
 import {
   Group,
   Mesh,
-  IcosahedronGeometry,
   SphereGeometry,
   ConeGeometry,
   BoxGeometry,
@@ -34,6 +33,7 @@ import {
   DataTexture,
   NearestFilter,
   Vector3,
+  Vector4,
   Object3D,
 } from 'three';
 import { createWaterMaterial, createAuraMaterial, createAtmosphereMaterial } from './waterShader';
@@ -57,9 +57,14 @@ function mulberry32(seed: number) {
   };
 }
 
-/* ---- 3-step gradient map for toon shading ---- */
+/* ---- Four-band gradient map for soft toon shading ---- */
 function createGradientMap(): DataTexture {
-  const colors = new Uint8Array([60, 100, 180, 255]);
+  const colors = new Uint8Array([
+    48, 48, 48, 255,
+    112, 112, 112, 255,
+    190, 190, 190, 255,
+    255, 255, 255, 255,
+  ]);
   const texture = new DataTexture(colors, 4, 1);
   texture.magFilter = NearestFilter;
   texture.minFilter = NearestFilter;
@@ -67,10 +72,54 @@ function createGradientMap(): DataTexture {
   return texture;
 }
 
+function createIslandPatchGeometry(radius: number, rand: () => number): BufferGeometry {
+  const segments = 32;
+  const rings = [0.34, 0.68, 1];
+  const phaseA = rand() * Math.PI * 2;
+  const phaseB = rand() * Math.PI * 2;
+  const phaseC = rand() * Math.PI * 2;
+  const contour = Array.from({ length: segments }, (_, i) => {
+    const angle = (i / segments) * Math.PI * 2;
+    return 1 + Math.sin(angle * 3 + phaseA) * 0.1 + Math.sin(angle * 5 + phaseB) * 0.055 + Math.sin(angle * 8 + phaseC) * 0.025;
+  });
+
+  const vertices = [0, 0, 0];
+  for (const ring of rings) {
+    for (let i = 0; i < segments; i++) {
+      const angle = (i / segments) * Math.PI * 2;
+      const r = radius * ring * contour[i];
+      const x = Math.cos(angle) * r;
+      const z = Math.sin(angle) * r;
+      vertices.push(x, -(x * x + z * z) * 0.5, z);
+    }
+  }
+
+  const indices: number[] = [];
+  for (let i = 0; i < segments; i++) {
+    const next = (i + 1) % segments;
+    indices.push(0, 1 + next, 1 + i);
+  }
+  for (let ring = 1; ring < rings.length; ring++) {
+    const inner = 1 + (ring - 1) * segments;
+    const outer = 1 + ring * segments;
+    for (let i = 0; i < segments; i++) {
+      const next = (i + 1) % segments;
+      indices.push(inner + i, inner + next, outer + next, inner + i, outer + next, outer + i);
+    }
+  }
+
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 /* ---- Island data ---- */
 export interface IslandData {
   mesh: Group;
   basePosition: Vector3;
+  coastRadius: number;
   initiallyVisible: boolean;
 }
 
@@ -101,20 +150,21 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
   const gradientMap = createGradientMap();
 
   /* ---- Planet core ---- */
-  const coreGeo = new IcosahedronGeometry(1, 5);
+  const coreGeo = new SphereGeometry(1, 64, 48);
   const coreMat = new MeshToonMaterial({
     color: new Color(0x8b7355),
     gradientMap,
   });
 
-  // Vertex-color-like: perturb positions slightly for organic feel
+  // A tiny smooth displacement keeps the silhouette organic without visible mesh facets.
   const positions = coreGeo.attributes.position;
+  const phase = rand() * Math.PI * 2;
   for (let i = 0; i < positions.count; i++) {
     const x = positions.getX(i);
     const y = positions.getY(i);
     const z = positions.getZ(i);
     const len = Math.sqrt(x * x + y * y + z * z);
-    const variation = 0.97 + rand() * 0.06;
+    const variation = 1 + Math.sin(x * 5.5 + phase) * Math.sin(y * 4.5 - phase) * Math.sin(z * 6 + phase * 0.7) * 0.006;
     positions.setXYZ(i, (x / len) * variation, (y / len) * variation, (z / len) * variation);
   }
   positions.needsUpdate = true;
@@ -124,7 +174,7 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
   group.add(planetCore);
 
   /* ---- Water ---- */
-  const waterGeo = new SphereGeometry(1.02, 48, 48);
+  const waterGeo = new SphereGeometry(1.02, 72, 48);
   const waterMat = createWaterMaterial();
   const waterMesh = new Mesh(waterGeo, waterMat);
   group.add(waterMesh);
@@ -132,46 +182,43 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
   /* ---- Islands (5-7) ---- */
   const islandCount = 5 + Math.floor(rand() * 3);
   const islands: IslandData[] = [];
-  const islandColors = [0x7eab6e, 0x5c8a4c, 0xd4c49a, 0x7eab6e, 0xe5d5a8, 0x7eab6e, 0x5c8a4c];
+  const islandColors = [0x5c8a4c, 0x73945b, 0x68854d, 0x708f53, 0x61864d, 0x7a9654, 0x5f874b];
 
   for (let i = 0; i < islandCount; i++) {
     const islandGroup = new Group();
 
     // Position on sphere surface
-    const phi = Math.acos(2 * rand() - 1);
-    const theta = rand() * Math.PI * 2;
-    const r = 1.01;
-    const pos = new Vector3(
-      r * Math.sin(phi) * Math.cos(theta),
-      r * Math.sin(phi) * Math.sin(theta),
-      r * Math.cos(phi),
+    const r = 1.007;
+    const pos = i === 0
+      ? new Vector3(0.28, 0.58, 0.76).normalize().multiplyScalar(r)
+      : (() => {
+          const phi = Math.acos(2 * rand() - 1);
+          const theta = rand() * Math.PI * 2;
+          return new Vector3(
+            r * Math.sin(phi) * Math.cos(theta),
+            r * Math.sin(phi) * Math.sin(theta),
+            r * Math.cos(phi),
+          );
+        })();
+
+    // Two thin, curved layers read as a coastline and a flat organic land patch.
+    const coastRadius = i === 0 ? 0.22 + rand() * 0.03 : 0.18 + rand() * 0.06;
+    const coast = new Mesh(
+      createIslandPatchGeometry(coastRadius * 1.18, rand),
+      new MeshToonMaterial({ color: new Color(0xa18b69), gradientMap }),
     );
+    coast.position.y = 0.022;
+    islandGroup.add(coast);
 
-    // Flattened sphere (island base)
-    const baseGeo = new SphereGeometry(0.08 + rand() * 0.06, 8, 6);
-    const baseMat = new MeshToonMaterial({
-      color: new Color(islandColors[i % islandColors.length]),
-      gradientMap,
-    });
-    const baseMesh = new Mesh(baseGeo, baseMat);
-    baseMesh.scale.set(1, 0.35, 1);
-    islandGroup.add(baseMesh);
-
-    // Small peak (cone)
-    if (rand() > 0.4) {
-      const peakGeo = new ConeGeometry(0.03 + rand() * 0.02, 0.06 + rand() * 0.04, 5);
-      const peakMat = new MeshToonMaterial({
-        color: new Color(islandColors[(i + 2) % islandColors.length]),
-        gradientMap,
-      });
-      const peak = new Mesh(peakGeo, peakMat);
-      peak.position.y = 0.03;
-      islandGroup.add(peak);
-    }
+    const land = new Mesh(
+      createIslandPatchGeometry(coastRadius * 0.92, rand),
+      new MeshToonMaterial({ color: new Color(islandColors[i % islandColors.length]), gradientMap }),
+    );
+    land.position.y = 0.029;
+    islandGroup.add(land);
 
     islandGroup.position.copy(pos);
-    islandGroup.lookAt(0, 0, 0);
-    islandGroup.rotateX(Math.PI);
+    islandGroup.quaternion.setFromUnitVectors(new Vector3(0, 1, 0), pos.clone().normalize());
 
     // Only first island visible initially
     const initiallyVisible = i === 0;
@@ -180,8 +227,15 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
     }
 
     group.add(islandGroup);
-    islands.push({ mesh: islandGroup, basePosition: pos, initiallyVisible });
+    islands.push({ mesh: islandGroup, basePosition: pos, coastRadius, initiallyVisible });
   }
+
+  const islandInfo = waterMat.uniforms.uIslands.value as Vector4[];
+  islands.slice(0, islandInfo.length).forEach((island, index) => {
+    const direction = island.basePosition.clone().normalize();
+    islandInfo[index].set(direction.x, direction.y, direction.z, island.coastRadius * 1.18 + 0.025);
+  });
+  waterMat.uniforms.uIslandCount.value = Math.min(islands.length, islandInfo.length);
 
   /* ---- Boat ---- */
   const boatGroup = new Group();
@@ -266,7 +320,7 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
   );
 
   /* ---- Stars ---- */
-  const starCount = 800 + Math.floor(rand() * 400);
+  const starCount = 320 + Math.floor(rand() * 120);
   const starPositions = new Float32Array(starCount * 3);
   for (let i = 0; i < starCount; i++) {
     const phi = Math.acos(2 * rand() - 1);
@@ -281,9 +335,9 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
   starGeo.setAttribute('position', new Float32BufferAttribute(starPositions, 3));
   const starMat = new PointsMaterial({
     color: new Color(0xffffff),
-    size: 0.02,
+    size: 0.014,
     transparent: true,
-    opacity: 0.8,
+    opacity: 0.32,
     depthWrite: false,
     sizeAttenuation: true,
   });

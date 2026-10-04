@@ -2,74 +2,56 @@ import { useEffect, useRef } from 'preact/hooks';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { PlanetCanvas, getScene } from './PlanetCanvas';
+import { StoryHighlights } from './StoryHighlights';
 import { copy } from '../content/copy';
-import { zoomProgress, prefersReducedMotion, headerVisible } from '../state/store';
+import { storyProgress, storyStep, prefersReducedMotion } from '../state/store';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export function ZoomSequence() {
   const spacerRef = useRef<HTMLDivElement>(null);
-  const heroDomRef = useRef<HTMLDivElement>(null);
-  const thresholdRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (prefersReducedMotion.value) return;
     if (!spacerRef.current) return;
 
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: spacerRef.current,
-        start: 'top top',
-        end: 'bottom bottom',
-        scrub: 1.2,
-        onUpdate: (self) => {
-          zoomProgress.value = self.progress;
-
-          // Show header when entered
-          if (self.progress >= 0.78 && !headerVisible.value) {
-            headerVisible.value = true;
-          }
-
-          // Snapshot at threshold for interior continuity
-          if (self.progress >= 0.75 && self.progress <= 0.82) {
-            const scene = getScene();
-            if (scene) {
-              const dataUrl = scene.snapshot();
-              const interior = document.getElementById('interior-bg');
-              if (interior) {
-                interior.style.backgroundImage = `url(${dataUrl})`;
-              }
-            }
-          }
-
-          // Stop render loop when fully entered
-          if (self.progress >= 0.95) {
-            getScene()?.stopLoop();
-          }
-        },
+    const trigger = ScrollTrigger.create({
+      trigger: spacerRef.current,
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: 0.35,
+      onUpdate: (self) => {
+        storyProgress.value = self.progress;
+        storyStep.value = Math.min(copy.storyBeats.length, Math.floor(self.progress * (copy.storyBeats.length + 1)));
+        if (self.progress >= 0.98) getScene()?.stopLoop();
+        else getScene()?.startLoop();
+      },
+      onLeaveBack: () => {
+        storyProgress.value = 0;
+        storyStep.value = 0;
+        getScene()?.setStoryProgress(0);
+        getScene()?.startLoop();
       },
     });
 
-    // Hero DOM fade out
-    if (heroDomRef.current) {
-      tl.to(heroDomRef.current, { opacity: 0, y: -40, duration: 0.8 }, 0.4);
-    }
-
-    // Threshold flash
-    if (thresholdRef.current) {
-      tl.fromTo(
-        thresholdRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.3 },
-        0.65,
-      ).to(thresholdRef.current, { opacity: 0, duration: 0.4 }, 0.8);
-    }
-
     return () => {
-      tl.kill();
-      ScrollTrigger.getAll().forEach((st) => st.kill());
+      trigger.kill();
     };
   }, []);
+
+  const handleStoryJump = (step: number) => {
+    if (prefersReducedMotion.value || !spacerRef.current) {
+      storyStep.value = step;
+      getScene()?.setStoryProgress(step / (copy.storyBeats.length + 1));
+      return;
+    }
+
+    const spacer = spacerRef.current;
+    const progress = (step + 0.5) / (copy.storyBeats.length + 1);
+    const start = spacer.getBoundingClientRect().top + window.scrollY;
+    const range = Math.max(0, spacer.offsetHeight - window.innerHeight);
+    window.scrollTo({ top: start + range * progress, behavior: 'smooth' });
+  };
 
   const handlePulse = () => {
     getScene()?.pulse();
@@ -80,13 +62,16 @@ export function ZoomSequence() {
     return (
       <section id="zoom-static">
         <PlanetCanvas />
-        <div class="hero-dom" style={{ position: 'relative', minHeight: '100vh' }}>
-          <span class="pill pill--gold">{copy.badge}</span>
-          <h1 class="hero-dom__logline">{copy.logline}</h1>
-          <p class="hero-dom__elevator">{copy.elevator}</p>
-          <a href="#que-es" class="btn btn--primary">
-            Entrar
-          </a>
+        <div class="hero-dom hero-dom--static">
+          <div class="hero-copy">
+            <span class="hero-brand"><span aria-hidden="true">✧</span> Planetary Sim</span>
+            <span class="hero-kicker">{copy.badge}</span>
+            <h1 class="hero-dom__logline">{copy.logline}</h1>
+            <p class="hero-dom__elevator">{copy.elevator}</p>
+            <button class="btn btn--primary hero-cta" onClick={handlePulse} type="button">{copy.ctaPulse} ✧</button>
+            <StoryHighlights onJump={handleStoryJump} />
+          </div>
+          <span class="hero-dom__hint">{copy.hintScroll}</span>
         </div>
       </section>
     );
@@ -97,20 +82,25 @@ export function ZoomSequence() {
       <PlanetCanvas />
 
       {/* Hero DOM overlay (visible during orbit phase) */}
-      <div ref={heroDomRef} class="hero-dom" id="hero-dom">
-        <span class="pill pill--gold">{copy.badge}</span>
-        <h1 class="hero-dom__logline">{copy.logline}</h1>
-        <p class="hero-dom__elevator">{copy.elevator}</p>
-        <button class="btn btn--primary" onClick={handlePulse} type="button">
-          {copy.ctaPulse}
-        </button>
-        <span class="hero-dom__hint">{copy.hintScroll}</span>
+      <div class="hero-dom" id="hero-dom">
+        <div class="hero-copy">
+          <span class="hero-brand"><span aria-hidden="true">✧</span> Planetary Sim</span>
+          <span class="hero-kicker">{copy.badge}</span>
+          <h1 class="hero-dom__logline">{copy.logline}</h1>
+          <p class="hero-dom__elevator">{copy.elevator}</p>
+          <button class="btn btn--primary hero-cta" onClick={handlePulse} type="button">
+            {copy.ctaPulse} <span aria-hidden="true">✧</span>
+          </button>
+          <StoryHighlights onJump={handleStoryJump} />
+        </div>
+        <aside class="orbital-caption" aria-label="Estilo visual del planeta en Unity">
+          <span aria-hidden="true">◉</span>
+          <span>Agua toon · espuma costera · acabado clay · stop-motion 12 fps</span>
+        </aside>
+        <span class="hero-dom__hint"><span aria-hidden="true">↓</span> Desliza para recorrer la demo</span>
       </div>
 
-      {/* Threshold flash (warm transition) */}
-      <div ref={thresholdRef} class="threshold-flash" id="threshold-flash" />
-
-      {/* Zoom spacer (scroll distance = zoom distance) */}
+      {/* Scroll through the feature story while the orbital view stays fixed. */}
       <div ref={spacerRef} class="zoom-spacer" id="zoom-spacer" />
     </section>
   );

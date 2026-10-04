@@ -14,9 +14,25 @@
   --cream-warm: #FFF3D6;
   --cream-soft: #FFFDF7;
   --parchment: #F5ECD7;
-  --wood: #8B7355;
-  --wood-dark: #6B5640;
-  --wood-light: #A89070;
+  --wood: #C58F5B;
+  --wood-dark: #7A5334;
+  --wood-light: #AE9268;
+  --cream-deep: #EFE0BF;
+  --panel: #F7EFDC;
+
+  /* ---- Colors: Unity UI theme (theme.ts) ---- */
+  --science: #8E7BE8;
+  --stress: #D9903F;
+  --stasis: #8EA6C0;
+  --mint-dark: #2E8A6C;
+  --tile-islands-bg: #E4F4D4;
+  --tile-islands-fg: #4C8A3A;
+  --tile-pop-bg: #DCEBFA;
+  --tile-pop-fg: #39729E;
+  --tile-temp-bg: #FCEDD2;
+  --tile-temp-fg: #A87C2A;
+  --tile-eons-bg: #EAE3FB;
+  --tile-eons-fg: #7259AE;
 
   /* ---- Colors: Biome ---- */
   --patch-grass: #7EAB6E;
@@ -28,8 +44,8 @@
   --water-foam: #E0F4F4;
 
   /* ---- Colors: Accent ---- */
-  --mint: #7ED4A8;
-  --mint-glow: #A0E8C4;
+  --mint: #5FC6A5;
+  --mint-glow: #9FE0C8;
   --astral-gold: #FFD475;
   --astral-warm: #FFBF42;
   --aura-cool: #6E8FAB;
@@ -45,8 +61,8 @@
   --border-space: rgba(200, 203, 223, 0.12);
 
   /* ---- Typography ---- */
-  --font-display: 'DM Serif Display', Georgia, serif;
-  --font-body: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-display: 'Fredoka', 'Trebuchet MS', sans-serif;
+  --font-body: 'Nunito', system-ui, -apple-system, sans-serif;
 
   --text-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.8rem);
   --text-sm: clamp(0.8rem, 0.75rem + 0.3vw, 0.925rem);
@@ -89,7 +105,7 @@
   /* ---- Shadows ---- */
   --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.06);
   --shadow-medium: 0 4px 24px rgba(0, 0, 0, 0.1);
-  --shadow-glow-mint: 0 0 20px rgba(126, 212, 168, 0.25);
+  --shadow-glow-mint: 0 0 20px rgba(95, 198, 165, 0.25);
   --shadow-glow-gold: 0 0 20px rgba(255, 212, 117, 0.3);
 
   /* ---- Transitions ---- */

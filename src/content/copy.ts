@@ -8,13 +8,53 @@
 export const copy = {
   /* ---- Hero (Órbita) ---- */
   logline:
-    'Despierta un planeta diminuto, acompaña la evolución de sus civilizaciones y contempla cómo cada mundo deja su huella en las estrellas.',
+    'Un planeta. Un compañero.',
 
   elevator:
-    'Un juego cozy sobre un pequeño planeta que evoluciona solo: despierta la vida, moldea sus especies y contempla cómo cada civilización deja un legado.',
+    'Despierta la vida y observa cómo tu mundo evoluciona mientras haces tus cosas. Siempre a su ritmo; siempre listo para recibirte.',
 
-  ctaPulse: 'Despertar el planeta',
+  ctaPulse: 'Darle un pulso al planeta',
   hintScroll: 'Desliza para acercarte ↓',
+
+  /* ---- Scrollytelling: demostración del juego ---- */
+  storyIntro: 'Un mundo pequeño que escribe una historia enorme.',
+  storyBeats: [
+    {
+      eyebrow: '01 · SEMILLA',
+      title: 'Ponle nombre a tu mundo',
+      text: 'El nombre genera una semilla estable: cada planeta obtiene su propio mapa de islas y puede volver a generarse igual.',
+      fact: 'Nombre → semilla → geografía reproducible',
+      glyph: '✎',
+    },
+    {
+      eyebrow: '02 · DESPERTAR',
+      title: 'La vida empieza con un clic',
+      text: 'La partida comienza con una isla y sin habitantes. Despierta la vida; los clics estimulan el crecimiento y nuevas islas aparecen poco a poco.',
+      fact: '1 isla · población inicial 0',
+      glyph: '✧',
+    },
+    {
+      eyebrow: '03 · OBSERVAR',
+      title: 'El planeta sigue a su ritmo',
+      text: 'El crecimiento es principalmente autónomo. Los Eones representan tiempo de aplicación abierta; las motas astrales dan pequeños impulsos. La estasis reduce las crisis durante las pausas.',
+      fact: 'Atención ocasional, sin castigo por ausentarte',
+      glyph: '◷',
+    },
+    {
+      eyebrow: '04 · EVOLUCIONAR',
+      title: 'Dale identidad a la especie',
+      text: 'Combina forma de vida, filosofía y material. Las tendencias de Naturaleza/Tecnología y Frío/Calor se ajustan con decisiones puntuales, no con microgestión.',
+      fact: 'Forma de vida + filosofía + material',
+      glyph: '❋',
+    },
+    {
+      eyebrow: '05 · TRASCENDER',
+      title: 'Cada ciclo deja algo atrás',
+      text: 'La civilización pasa de la superficie a la órbita y la trascendencia. Al ascender nace una nueva especie, mientras Eones, ruinas y descubrimientos conservan el legado.',
+      fact: 'Planetaria → orbital → trascendente → legado',
+      glyph: '◎',
+    },
+  ],
 
   /* ---- Micro-labels (Zoom) ---- */
   microLabels: [
@@ -31,6 +71,9 @@ export const copy = {
   interiorSubline:
     'Pensado para sesiones breves y observación relajada, Planetary Sim deja que la simulación avance por sí sola y ofrece una estasis segura cuando el jugador se ausenta.',
 
+  interiorShaderNote:
+    'Bajo la superficie, el shader PlanetInterior pinta bandas de profundidad, rayos de luz, cáusticas y burbujas con una animación cuantizada a 12 fps. El océano visible usa PlanetWater: oleaje toon, espuma alrededor de las costas y textura clay.',
+
   featuredQuote:
     '«Cada mundo termina convirtiéndose en el recuerdo del siguiente.»',
 
@@ -39,6 +82,39 @@ export const copy = {
     { icon: '⏳', label: 'Participación ocasional' },
     { icon: '✧', label: 'Ascensión = legado' },
   ],
+
+  /* ---- Compañero de escritorio ---- */
+  companionLabel: 'Compañero de escritorio',
+  companionTitle: 'Un planeta que vive en tu escritorio',
+  companionDescription:
+    'Planetary Sim se ejecuta en una ventana transparente: solo el planeta y su interfaz capturan el ratón, el resto de clics pasan a lo que tengas debajo. Déjalo en un rincón mientras trabajas y míralo evolucionar. Prueba aquí el comportamiento real de la demo.',
+  companionHint:
+    'Clic izquierdo: anillo orbital · Clic derecho: resumen · Arrastra para moverlo · Clic en ✧: eones',
+  companionLayers: [
+    { id: 'top', label: 'Superior', note: 'Siempre encima' },
+    { id: 'normal', label: 'Normal', note: 'Como cualquier ventana' },
+    { id: 'bottom', label: 'Inferior', note: 'Detrás de todo' },
+  ],
+  companionToggles: {
+    transparent: 'Fondo transparente',
+    clickThrough: 'Clic a través',
+  },
+  radialLabels: [
+    { id: 'stats', label: 'Estadísticas', glyph: '✦' },
+    { id: 'megas', label: 'Megaestructuras', glyph: '◎' },
+    { id: 'almanac', label: 'Almanaque', glyph: '❖' },
+    { id: 'evolution', label: 'Evolución', glyph: '❋' },
+    { id: 'trends', label: 'Tendencias', glyph: '≈' },
+  ],
+  radialPanels: {
+    stats: 'Estado del planeta: islas, habitantes, temperatura y eones.',
+    megas: 'Coste, requisito y efecto de cada megaestructura orbital.',
+    almanac: 'Descubrimientos y progreso de colección entre ciclos.',
+    evolution: 'Especie, mutación disponible y ascensión.',
+    trends: 'Ejes Naturaleza ↔ Tecnología y Frío ↔ Calor.',
+  },
+  companionNote:
+    'Demo ilustrativa de la ventana de la versión Unity en Windows. Plataformas finales por confirmar.',
 
   /* ---- Cómo se juega ---- */
   loopTitle: '¿Cómo se juega?',
@@ -165,9 +241,10 @@ export const copy = {
 
   /* ---- Navigation ---- */
   nav: [
-    { label: 'Qué es', href: '#que-es' },
+    { label: 'Recorrido', href: '#zoom' },
+    { label: 'Compañero', href: '#companero' },
     { label: 'Cómo se juega', href: '#como-se-juega' },
-    { label: 'Diferenciadores', href: '#diferenciadores' },
+    { label: 'Evolución', href: '#fases' },
     { label: 'Estado', href: '#estado' },
     { label: 'FAQ', href: '#faq' },
   ],

@@ -1,9 +1,9 @@
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [preact()],
-  base: '/planetary-sim-website/',
+  base: command === 'serve' ? '/' : '/planetary-sim-website/',
   build: {
     outDir: 'dist',
     assetsInlineLimit: 4096,
@@ -20,4 +20,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

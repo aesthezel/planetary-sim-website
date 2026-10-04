@@ -24,6 +24,13 @@ export function InteriorIntro() {
           </p>
         </Reveal>
 
+        <Reveal delay={0.23}>
+          <p class="shader-note">
+            <span class="shader-note__icon" aria-hidden="true">◉</span>
+            <span>{copy.interiorShaderNote}</span>
+          </p>
+        </Reveal>
+
         <Reveal delay={0.25}>
           <div
             style={{
