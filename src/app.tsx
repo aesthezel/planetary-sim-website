@@ -2,15 +2,13 @@ import { Header } from './components/Header';
 import { ZoomSequence } from './components/ZoomSequence';
 import { InteriorIntro } from './components/InteriorIntro';
 import { DesktopCompanion } from './components/DesktopCompanion';
-import { LoopSteps } from './components/LoopSteps';
 import { Traits } from './components/Traits';
+import { FlowOfLife } from './components/FlowOfLife';
 import { Phases } from './components/Phases';
-import { LivingWorld } from './components/LivingWorld';
 import { Status } from './components/Status';
 import { PressKit } from './components/PressKit';
 import { Faq } from './components/Faq';
 import { Footer } from './components/Footer';
-import { copy } from './content/copy';
 
 export function App() {
   return (
@@ -32,21 +30,16 @@ export function App() {
           <div class="interior__grain" aria-hidden="true" />
           <InteriorIntro />
           <DesktopCompanion />
-          <LoopSteps />
-          <Traits />
+          <FlowOfLife />
           <Phases />
-          <LivingWorld />
+          <Traits />
           <Status />
           <PressKit />
           <Faq />
           <Footer />
         </div>
       </main>
-
-      {/* Fixed bottom disclaimer */}
-      <aside class="disclaimer" aria-label="Aviso legal">
-        <span>{copy.disclaimer}</span>
-      </aside>
     </>
   );
 }
+

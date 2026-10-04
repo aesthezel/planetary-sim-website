@@ -193,15 +193,21 @@ export function PlanetCanvas() {
         })
       : null;
 
-    const desktopTarget = document.getElementById('companion-planet');
+    const targets = [
+      { el: document.getElementById('companion-planet'), ramp: 0.4, start: 'top 80%', end: 'bottom 12%' },
+      { el: document.getElementById('flow-planet'), ramp: 0.12, start: 'top 75%', end: 'bottom 25%' },
+    ].filter((t): t is { el: HTMLElement; ramp: number; start: string; end: string } => !!t.el);
+    let activeTarget: HTMLElement | null = null;
+
     const placeInDesktopWindow = () => {
-      if (!desktopTarget) return;
-      const bounds = desktopTarget.getBoundingClientRect();
+      if (!activeTarget) return;
+      const bounds = activeTarget.getBoundingClientRect();
       const targetRect = { left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height };
       const flyIn = flightEase(desktopBlend);
       place(mixRect(floatingRect(), targetRect, flyIn), 'desktop', desktopBlend);
     };
     const flyOutToAmbient = () => {
+      activeTarget = null;
       desktopActive = false;
       desktopBlend = 0;
       desktopExit?.kill();
@@ -209,47 +215,47 @@ export function PlanetCanvas() {
       desktopExit = gsap.delayedCall(0.46, setAmbient);
     };
 
-    const desktopTrigger = desktopTarget
-      ? ScrollTrigger.create({
-          trigger: desktopTarget,
-          start: 'top 80%',
-          end: 'bottom 12%',
-          onUpdate: (self) => {
-            desktopActive = true;
-            desktopBlend = clamp01(self.progress / 0.4);
-            placeInDesktopWindow();
-          },
-          onEnter: () => {
-            desktopExit?.kill();
-            desktopActive = true;
-            desktopBlend = 0;
-            placeInDesktopWindow();
-          },
-          onEnterBack: () => {
-            desktopExit?.kill();
-            desktopActive = true;
-            placeInDesktopWindow();
-          },
-          onLeave: flyOutToAmbient,
-          onLeaveBack: flyOutToAmbient,
-        })
-      : null;
+    const desktopTriggers = targets.map(({ el, ramp, start, end }) => {
+      const zone = el.closest('.desk, [data-planet-zone]') ?? el;
+      const engage = (self: ScrollTrigger) => {
+        desktopExit?.kill();
+        activeTarget = el;
+        desktopActive = true;
+        desktopBlend = clamp01(self.progress / ramp);
+        placeInDesktopWindow();
+      };
+      const leave = () => {
+        if (activeTarget === el) flyOutToAmbient();
+      };
+      return ScrollTrigger.create({
+        trigger: zone,
+        start,
+        end,
+        onUpdate: (self) => { if (activeTarget === el || !activeTarget) engage(self); },
+        onEnter: engage,
+        onEnterBack: engage,
+        onLeave: leave,
+        onLeaveBack: leave,
+      });
+    });
 
-    const positionObserver = desktopTarget?.parentElement
-      ? new MutationObserver(() => {
-          if (desktopActive) placeInDesktopWindow();
-        })
-      : null;
-    if (positionObserver && desktopTarget?.parentElement) {
-      positionObserver.observe(desktopTarget.parentElement, { attributes: true, attributeFilter: ['style'] });
-    }
-    const targetResizeObserver = desktopTarget && typeof ResizeObserver !== 'undefined'
+    let lastBounds = '';
+    const trackDesktop = () => {
+      if (!desktopActive || !activeTarget) return;
+      const b = activeTarget.getBoundingClientRect();
+      const key = `${Math.round(b.left)}|${Math.round(b.top)}|${Math.round(b.width)}|${Math.round(b.height)}`;
+      if (key === lastBounds) return;
+      lastBounds = key;
+      placeInDesktopWindow();
+    };
+    if (targets.length) gsap.ticker.add(trackDesktop);
+
+    const targetResizeObserver = targets.length && typeof ResizeObserver !== 'undefined'
       ? new ResizeObserver(() => {
           if (desktopActive) placeInDesktopWindow();
         })
       : null;
-    if (desktopTarget) targetResizeObserver?.observe(desktopTarget);
-
+    targets.forEach((t) => targetResizeObserver?.observe(t.el));
     scene.setCompanionState(companionIslands.value, companionAwake.value);
     const unsubscribeStory = storyProgress.subscribe((progress) => {
       sceneInstance?.setStoryProgress(progress);
@@ -274,13 +280,13 @@ export function PlanetCanvas() {
       unsubscribeIslands();
       unsubscribeAwake();
       window.removeEventListener('resize', onResize);
-      positionObserver?.disconnect();
       targetResizeObserver?.disconnect();
       heroTrigger?.kill();
-      desktopTrigger?.kill();
+      desktopTriggers.forEach((t) => t.kill());
       desktopExit?.kill();
       syncDelay?.kill();
       gsap.ticker.remove(syncViewport);
+      gsap.ticker.remove(trackDesktop);
       modeTimeline?.kill();
       gsap.killTweensOf(wrapper);
       scene.dispose();
@@ -294,3 +300,4 @@ export function PlanetCanvas() {
     </div>
   );
 }
+

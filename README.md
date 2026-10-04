@@ -62,6 +62,22 @@ El proyecto incluye el flujo de trabajo [.github/workflows/deploy.yml](.github/w
 
 ---
 
+## 📚 Documentación Técnica Detallada
+
+Para una explicación exhaustiva de la arquitectura, el flujo de usuario, el motor 3D y el simulador de escritorio, consulta la suite de documentación en el directorio [docs/](docs/):
+
+- 📖 **[docs/README.md](docs/README.md)** — Índice maestro y mapa general.
+- 🎯 **[01. Visión y Propósito](docs/01-vision-y-proposito.md)** — Objetivos del pitch y reglas de marca.
+- 🛠️ **[02. Arquitectura Técnica](docs/02-arquitectura-tecnica.md)** — Stack tecnológico y presupuesto de rendimiento.
+- 🗺️ **[03. Flujo de Usuario y Experiencia](docs/03-flujo-de-usuario-y-experiencia.md)** — Recorrido interactivo y scrollytelling.
+- 🪐 **[04. Motor 3D y Shaders Procedurales](docs/04-motor-3d-y-shaders.md)** — Three.js, shaders GLSL y animación a 12 FPS.
+- ⚡ **[05. Estado Reactivo y Componentes](docs/05-estado-reactivo-y-componentes.md)** — Preact Signals y catálogo de componentes.
+- 🖥️ **[06. Simulador Desktop Companion](docs/06-simulador-desktop-companion.md)** — Demostración interactiva de la ventana de escritorio.
+- 🎨 **[07. Sistema de Diseño y Estilos](docs/07-sistema-de-diseno-y-estilos.md)** — Tokens CSS, tipografía fluida y accesibilidad.
+- 🚀 **[08. Despliegue y DevOps](docs/08-despliegue-y-automatizacion.md)** — Vite, pnpm y GitHub Actions CI/CD.
+
+---
+
 ## 📄 Licencia
 
 Consulta el archivo [LICENSE](LICENSE) para más detalles.

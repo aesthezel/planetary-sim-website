@@ -1,1 +1,65 @@
-/* Cleaned for Planetary Sim landing */
+/* Pastel editorial surfaces shared by the 1d landing direction. */
+.essence-band {
+  position: relative;
+  z-index: 1;
+  padding: clamp(1.5rem, 3vw, 2.75rem) 0;
+  background: var(--pastel-lilac);
+  color: var(--pastel-ink);
+  text-align: center;
+}
+
+.essence-band__inner { display: grid; justify-items: center; gap: 1rem; }
+.essence-band__lead { font-family: var(--font-display); font-size: clamp(1.2rem, 2vw, 1.65rem); font-weight: 700; }
+.essence-band__steps { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.8rem 1.1rem; }
+.essence-band__steps li { display: inline-flex; align-items: center; gap: 0.55rem; color: #574c70; font-size: var(--text-sm); font-weight: 800; }
+.essence-band__steps li > span:first-child { color: #8069a8; }
+.essence-band__steps i { margin-left: 0.5rem; color: #967ebc; font-style: normal; }
+
+.section-header__label { color: #8069a8; }
+.companion-section { background: var(--pastel-lavender); }
+.phases-section { background: var(--pastel-peach); }
+.phases-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(0.8rem, 2vw, 1.5rem); }
+.phase-card {
+  position: relative;
+  min-height: 100%;
+  padding: clamp(1.2rem, 2.4vw, 2rem);
+  overflow: hidden;
+  border: 1px solid rgba(46, 38, 69, 0.09);
+  border-radius: 1.4rem;
+  background: rgba(255, 251, 248, 0.8);
+  box-shadow: 0 12px 30px rgba(83, 57, 63, 0.06);
+}
+.phase-card__topline { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; margin-bottom: 1.4rem; }
+.phase-card__number { color: #856b9c; font-size: var(--text-xs); font-weight: 800; letter-spacing: 0.11em; }
+.phase-card__tag { padding: 0.3rem 0.65rem; border-radius: 999px; background: #f3d9d5; color: #714f5d; font-size: var(--text-xs); font-weight: 700; }
+.phase-card h3 { margin-bottom: 0.6rem; color: var(--pastel-ink); font-size: clamp(1.4rem, 2vw, 1.9rem); }
+.phase-card p { max-width: 42ch; color: #5e566c; font-size: var(--text-sm); line-height: 1.65; }
+.phase-card::after { content: ''; position: absolute; right: -1.8rem; bottom: -2.3rem; width: 6rem; aspect-ratio: 1; border: 1px solid rgba(128, 105, 168, 0.12); border-radius: 50%; }
+
+.traits-section { background: var(--pastel-green); }
+.traits-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.feature-card--pastel { height: 100%; border-color: rgba(46, 38, 69, 0.08); background: rgba(255, 255, 255, 0.62); }
+.feature-card--pastel .feature-card__icon { color: #8069a8; }
+.companion-section .companion__note { color: #6c627e; }
+.companion-section .companion__hint { color: #514967; }
+.companion-section .companion__controls .seg { background: rgba(255,255,255,0.7); border-color: rgba(46,38,69,0.1); }
+.companion-section .companion__controls .seg__btn { color: #514967; }
+.companion-section .companion__controls .seg__btn.is-on { background: #896fb0; color: #fff; }
+.companion-section .companion__controls > .seg__btn { background: rgba(255,255,255,0.7); border-color: rgba(46,38,69,0.1); }
+.companion-section .toggle { color: #514967; }
+
+.site-header__inner { gap: clamp(0.75rem, 2vw, 2rem); }
+.site-header__nav { align-items: center; gap: clamp(0.8rem, 2vw, 1.6rem); }
+.site-header__link { white-space: nowrap; }
+
+@media (max-width: 850px) {
+  .phases-grid, .traits-grid { grid-template-columns: 1fr; }
+  .phase-card { min-height: auto; }
+}
+
+@media (max-width: 700px) {
+  .essence-band { padding-block: 1.4rem; }
+  .essence-band__steps { gap: 0.55rem 0.75rem; }
+  .essence-band__steps li { font-size: var(--text-xs); }
+  .essence-band__steps i { display: none; }
+}

@@ -8,68 +8,52 @@
 export const copy = {
   /* ---- Hero (Órbita) ---- */
   logline:
-    'Un planeta. Un compañero.',
+    'Tu mundo.\nA tu ritmo.',
 
   elevator:
-    'Despierta la vida y observa cómo tu mundo evoluciona mientras haces tus cosas. Siempre a su ritmo; siempre listo para recibirte.',
+    'Despierta la vida en un planeta diminuto. Acompaña la evolución de una civilización con decisiones ocasionales y vuelve cuando quieras: tu mundo no te castiga por ausentarte.',
 
   ctaPulse: 'Darle un pulso al planeta',
-  hintScroll: 'Desliza para acercarte ↓',
+  ctaPublisher: 'Contacto publishers',
+  ctaExplore: 'Ver cómo evoluciona',
+  hintScroll: 'Desliza para ver el planeta en tu escritorio ↓',
 
-  /* ---- Scrollytelling: demostración del juego ---- */
-  storyIntro: 'Un mundo pequeño que escribe una historia enorme.',
+  /* ---- Recorrido visual ---- */
+  storyIntro: 'Despierta un mundo. Acompaña una civilización. Conserva su legado.',
   storyBeats: [
     {
       eyebrow: '01 · SEMILLA',
       title: 'Ponle nombre a tu mundo',
-      text: 'El nombre genera una semilla estable: cada planeta obtiene su propio mapa de islas y puede volver a generarse igual.',
+      text: 'El nombre crea una semilla estable y una geografía de islas única que puede volver a generarse.',
       fact: 'Nombre → semilla → geografía reproducible',
       glyph: '✎',
     },
     {
       eyebrow: '02 · DESPERTAR',
-      title: 'La vida empieza con un clic',
-      text: 'La partida comienza con una isla y sin habitantes. Despierta la vida; los clics estimulan el crecimiento y nuevas islas aparecen poco a poco.',
+      title: 'Una isla. La primera chispa de vida.',
+      text: 'Despierta la isla inicial y observa cómo la población crece mientras emergen nuevas tierras.',
       fact: '1 isla · población inicial 0',
       glyph: '✧',
     },
     {
-      eyebrow: '03 · OBSERVAR',
-      title: 'El planeta sigue a su ritmo',
-      text: 'El crecimiento es principalmente autónomo. Los Eones representan tiempo de aplicación abierta; las motas astrales dan pequeños impulsos. La estasis reduce las crisis durante las pausas.',
-      fact: 'Atención ocasional, sin castigo por ausentarte',
-      glyph: '◷',
-    },
-    {
-      eyebrow: '04 · EVOLUCIONAR',
-      title: 'Dale identidad a la especie',
-      text: 'Combina forma de vida, filosofía y material. Las tendencias de Naturaleza/Tecnología y Frío/Calor se ajustan con decisiones puntuales, no con microgestión.',
-      fact: 'Forma de vida + filosofía + material',
-      glyph: '❋',
-    },
-    {
-      eyebrow: '05 · TRASCENDER',
-      title: 'Cada ciclo deja algo atrás',
-      text: 'La civilización pasa de la superficie a la órbita y la trascendencia. Al ascender nace una nueva especie, mientras Eones, ruinas y descubrimientos conservan el legado.',
-      fact: 'Planetaria → orbital → trascendente → legado',
+      eyebrow: '03 · LEGADO',
+      title: 'Cada especie deja su huella',
+      text: 'Elige rasgos, guía una civilización hasta la trascendencia y conserva sus ruinas y descubrimientos al ascender.',
+      fact: 'Planetaria → Orbital → Transcendente',
       glyph: '◎',
     },
   ],
 
   /* ---- Micro-labels (Zoom) ---- */
-  microLabels: [
-    '1 isla viva',
-    'Eones +0.05 ✧',
-    'Sin castigo por ausentarte',
-  ],
+  microLabels: ['Un planeta procedural', 'Decisiones ocasionales', 'Legado persistente'],
 
   /* ---- Interior: Qué es ---- */
   interiorTitle: '¿Qué es Planetary Sim?',
   interiorDescription:
-    'Da nombre a un mundo y observa cómo despierta. En Planetary Sim, un planeta diminuto evoluciona desde una isla sin vida hasta una civilización capaz de expandirse más allá de su superficie. Estimula el crecimiento, recoge motas astrales, combina rasgos para dar forma a cada especie y construye megaestructuras que orbitan el planeta. Cuando llega el momento, asciende: el mundo comienza un nuevo ciclo, pero sus ruinas y descubrimientos permanecen.',
+    'Una simulación incremental cozy y compañero de escritorio. Despierta la vida en un planeta procedural, orienta la evolución de su especie y observa cómo cada ascensión deja un legado.',
 
   interiorSubline:
-    'Pensado para sesiones breves y observación relajada, Planetary Sim deja que la simulación avance por sí sola y ofrece una estasis segura cuando el jugador se ausenta.',
+    'El mundo avanza principalmente por sí solo. Puedes volver cuando quieras: la estasis reduce la presión y protege una experiencia sin castigos por ausentarte.',
 
   interiorShaderNote:
     'Bajo la superficie, el shader PlanetInterior pinta bandas de profundidad, rayos de luz, cáusticas y burbujas con una animación cuantizada a 12 fps. El océano visible usa PlanetWater: oleaje toon, espuma alrededor de las costas y textura clay.',
@@ -78,18 +62,18 @@ export const copy = {
     '«Cada mundo termina convirtiéndose en el recuerdo del siguiente.»',
 
   pills: [
-    { icon: '🪐', label: 'Planeta vivo' },
-    { icon: '⏳', label: 'Participación ocasional' },
-    { icon: '✧', label: 'Ascensión = legado' },
+    { icon: '✧', label: 'Despierta la vida' },
+    { icon: '◷', label: 'Observa a tu ritmo' },
+    { icon: '◎', label: 'Deja un legado' },
   ],
 
   /* ---- Compañero de escritorio ---- */
-  companionLabel: 'Compañero de escritorio',
-  companionTitle: 'Un planeta que vive en tu escritorio',
+  companionLabel: '✦  ASÍ VIVE EN TU PANTALLA',
+  companionTitle: 'Tu planeta, junto a tus ventanas.',
   companionDescription:
-    'Planetary Sim se ejecuta en una ventana transparente: solo el planeta y su interfaz capturan el ratón, el resto de clics pasan a lo que tengas debajo. Déjalo en un rincón mientras trabajas y míralo evolucionar. Prueba aquí el comportamiento real de la demo.',
+    'Planetary Sim vive en una esquina de tu escritorio, girando a tu lado mientras trabajas, estudias o descansas.',
   companionHint:
-    'Clic izquierdo: anillo orbital · Clic derecho: resumen · Arrastra para moverlo · Clic en ✧: eones',
+    'Clic: despierta y abre el anillo · Clic derecho: resumen · Arrastra el planeta · Toca ✧ para recoger una mota',
   companionLayers: [
     { id: 'top', label: 'Superior', note: 'Siempre encima' },
     { id: 'normal', label: 'Normal', note: 'Como cualquier ventana' },
@@ -114,12 +98,12 @@ export const copy = {
     trends: 'Ejes Naturaleza ↔ Tecnología y Frío ↔ Calor.',
   },
   companionNote:
-    'Demo ilustrativa de la ventana de la versión Unity en Windows. Plataformas finales por confirmar.',
+    'Recreación web del planeta flotando sobre otras ventanas; no simula un sistema operativo ni sustituye una build del juego.',
 
   /* ---- Cómo se juega ---- */
-  loopTitle: '¿Cómo se juega?',
+  loopTitle: 'De una isla al legado.',
   loopDescription:
-    'El jugador nombra un planeta que sirve de semilla para su mundo, despierta la vida con un clic y observa cómo aparecen nuevas islas y crece la población.',
+    'Tres fases para acompañar a una civilización desde su primera isla hasta la trascendencia.',
   loopSteps: [
     {
       icon: '✨',
@@ -147,36 +131,26 @@ export const copy = {
   traitsTitle: '¿Qué lo distingue?',
   traits: [
     {
-      icon: '🌍',
-      title: 'Un mundo que invita a observar',
-      text: 'Un microplaneta 3D procedural con islas curvas, océano estilizado, barco autónomo y estructuras orbitales.',
+      icon: '🪐',
+      title: 'Un mundo para observar',
+      text: 'Un planeta procedural de escala juguete, con islas emergentes, océanos estilizados y vida orbital.',
     },
     {
-      icon: '☁️',
-      title: 'Progreso amable y de baja demanda',
-      text: 'El planeta avanza por sí mismo; la estasis evita que la ausencia del jugador se convierta en castigo.',
+      icon: '◷',
+      title: 'Progreso sin presión',
+      text: 'La simulación avanza principalmente sola. La estasis reduce la presión cuando te ausentas.',
     },
     {
       icon: '🧬',
-      title: 'Evolución con identidad emergente',
-      text: 'Cada especie combina forma de vida, filosofía y material; las elecciones alteran sus bonificaciones y su expresión visual.',
-    },
-    {
-      icon: '📜',
-      title: 'Legado entre ciclos',
-      text: 'La ascensión reinicia parcialmente el planeta, pero preserva eones, ruinas y descubrimientos del Almanaque.',
-    },
-    {
-      icon: '🔭',
-      title: 'Interfaz orbital',
-      text: 'Las estadísticas y decisiones aparecen cuando el jugador las solicita, dejando al planeta como foco visual.',
+      title: 'Especies con identidad',
+      text: 'Combina forma de vida, filosofía y material. Al ascender, conserva Eones, ruinas y descubrimientos.',
     },
   ],
 
   /* ---- Fases ---- */
-  phasesTitle: 'Fases de civilización',
+  phasesTitle: 'El planeta cambia. El legado permanece.',
   phasesDescription:
-    'Cada civilización atraviesa fases de desarrollo, desde las primeras chispas de vida hasta la trascendencia estelar.',
+    'Una progresión serena desde la primera chispa de vida hasta una nueva ascensión.',
 
   /* ---- Estado ---- */
   statusTitle: 'Estado del proyecto',
@@ -237,15 +211,13 @@ export const copy = {
   ],
 
   /* ---- Badge ---- */
-  badge: 'Demo en desarrollo',
+  badge: 'Plataforma objetivo: PC · Demo en desarrollo',
 
   /* ---- Navigation ---- */
   nav: [
-    { label: 'Recorrido', href: '#zoom' },
-    { label: 'Compañero', href: '#companero' },
-    { label: 'Cómo se juega', href: '#como-se-juega' },
-    { label: 'Evolución', href: '#fases' },
-    { label: 'Estado', href: '#estado' },
-    { label: 'FAQ', href: '#faq' },
+    { label: 'El juego', href: '#que-es' },
+    { label: 'Cómo se juega', href: '#fases' },
+    { label: 'El compañero', href: '#companero' },
   ],
 } as const;
+

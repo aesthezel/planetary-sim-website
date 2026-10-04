@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'preact/hooks';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { PlanetCanvas, getScene } from './PlanetCanvas';
-import { StoryHighlights } from './StoryHighlights';
 import { copy } from '../content/copy';
 import { storyProgress, storyStep, prefersReducedMotion } from '../state/store';
 
@@ -10,9 +9,10 @@ gsap.registerPlugin(ScrollTrigger);
 
 export function ZoomSequence() {
   const spacerRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = prefersReducedMotion.value;
 
   useEffect(() => {
-    if (prefersReducedMotion.value) return;
+    if (reducedMotion) return;
     if (!spacerRef.current) return;
 
     const trigger = ScrollTrigger.create({
@@ -37,71 +37,36 @@ export function ZoomSequence() {
     return () => {
       trigger.kill();
     };
-  }, []);
-
-  const handleStoryJump = (step: number) => {
-    if (prefersReducedMotion.value || !spacerRef.current) {
-      storyStep.value = step;
-      getScene()?.setStoryProgress(step / (copy.storyBeats.length + 1));
-      return;
-    }
-
-    const spacer = spacerRef.current;
-    const progress = (step + 0.5) / (copy.storyBeats.length + 1);
-    const start = spacer.getBoundingClientRect().top + window.scrollY;
-    const range = Math.max(0, spacer.offsetHeight - window.innerHeight);
-    window.scrollTo({ top: start + range * progress, behavior: 'smooth' });
-  };
+  }, [reducedMotion]);
 
   const handlePulse = () => {
     getScene()?.pulse();
   };
 
-  // Reduced motion: static hero with enter button
-  if (prefersReducedMotion.value) {
-    return (
-      <section id="zoom-static">
-        <PlanetCanvas />
-        <div class="hero-dom hero-dom--static">
-          <div class="hero-copy">
-            <span class="hero-brand"><span aria-hidden="true">✧</span> Planetary Sim</span>
-            <span class="hero-kicker">{copy.badge}</span>
-            <h1 class="hero-dom__logline">{copy.logline}</h1>
-            <p class="hero-dom__elevator">{copy.elevator}</p>
-            <button class="btn btn--primary hero-cta" onClick={handlePulse} type="button">{copy.ctaPulse} ✧</button>
-            <StoryHighlights onJump={handleStoryJump} />
-          </div>
-          <span class="hero-dom__hint">{copy.hintScroll}</span>
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section id="zoom">
+    <section id={reducedMotion ? 'zoom-static' : 'zoom'}>
       <PlanetCanvas />
 
-      {/* Hero DOM overlay (visible during orbit phase) */}
-      <div class="hero-dom" id="hero-dom">
+      <div class={`hero-dom ${reducedMotion ? 'hero-dom--static' : ''}`} id={reducedMotion ? undefined : 'hero-dom'}>
         <div class="hero-copy">
-          <span class="hero-brand"><span aria-hidden="true">✧</span> Planetary Sim</span>
-          <span class="hero-kicker">{copy.badge}</span>
+          <span class="hero-brand"><span aria-hidden="true">✦</span> Planetary Sim</span>
+          <span class="hero-kicker"><i aria-hidden="true" />{copy.badge}</span>
           <h1 class="hero-dom__logline">{copy.logline}</h1>
           <p class="hero-dom__elevator">{copy.elevator}</p>
-          <button class="btn btn--primary hero-cta" onClick={handlePulse} type="button">
-            {copy.ctaPulse} <span aria-hidden="true">✧</span>
-          </button>
-          <StoryHighlights onJump={handleStoryJump} />
+          <div class="hero-actions">
+            <a class="btn btn--primary hero-cta" href="#prensa">
+              {copy.ctaPublisher} <span aria-hidden="true">↗</span>
+            </a>
+            <button class="btn btn--pulse" onClick={handlePulse} type="button">
+              {copy.ctaPulse} <span aria-hidden="true">✧</span>
+            </button>
+          </div>
+          <span class="hero-platform">Simulación incremental cozy · Un jugador</span>
         </div>
-        <aside class="orbital-caption" aria-label="Estilo visual del planeta en Unity">
-          <span aria-hidden="true">◉</span>
-          <span>Agua toon · espuma costera · acabado clay · stop-motion 12 fps</span>
-        </aside>
-        <span class="hero-dom__hint"><span aria-hidden="true">↓</span> Desliza para recorrer la demo</span>
+        <span class="hero-dom__hint"><span aria-hidden="true">↓</span> {copy.hintScroll}</span>
       </div>
 
-      {/* Scroll through the feature story while the orbital view stays fixed. */}
-      <div ref={spacerRef} class="zoom-spacer" id="zoom-spacer" />
+      {!reducedMotion && <div ref={spacerRef} class="zoom-spacer" id="zoom-spacer" />}
     </section>
   );
 }

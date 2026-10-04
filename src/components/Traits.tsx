@@ -3,11 +3,11 @@ import { Reveal } from './Reveal';
 
 export function Traits() {
   return (
-    <section id="diferenciadores" class="section section--cream" style={{ background: 'var(--cream-warm)' }}>
+    <section id="diferenciadores" class="section section--cream traits-section">
       <div class="container">
         <Reveal>
           <div class="section-header">
-            <span class="section-header__label">Pilares</span>
+            <span class="section-header__label">La esencia del juego</span>
             <h2 class="section-header__title">{copy.traitsTitle}</h2>
             <p class="section-header__subtitle">
               Diseñado para ofrecer una alternativa íntima, contemplativa y estética dentro de la simulación incremental.
@@ -15,16 +15,11 @@ export function Traits() {
           </div>
         </Reveal>
 
-        <div class="feature-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+        <div class="feature-grid traits-grid">
           {copy.traits.map((trait, index) => (
             <Reveal key={trait.title} delay={index * 0.08}>
               <div
-                class="feature-card"
-                style={{
-                  background: 'var(--cream-soft)',
-                  borderColor: 'rgba(139, 115, 85, 0.1)',
-                  height: '100%',
-                }}
+                class="feature-card feature-card--pastel"
               >
                 <div class="feature-card__icon">{trait.icon}</div>
                 <h3 class="feature-card__title">{trait.title}</h3>

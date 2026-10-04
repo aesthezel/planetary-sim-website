@@ -20,6 +20,15 @@
   --cream-deep: #EFE0BF;
   --panel: #F7EFDC;
 
+  /* ---- Pastel campaign palette (design 1d) ---- */
+  --pastel-ink: #2E2645;
+  --pastel-lavender: #F3EEFB;
+  --pastel-lilac: #DCD2F4;
+  --pastel-peach: #FCEDE6;
+  --pastel-green: #E3F2EA;
+  --pastel-coral: #F4A9A0;
+  --pastel-blue: #AFC5D2;
+
   /* ---- Colors: Unity UI theme (theme.ts) ---- */
   --science: #8E7BE8;
   --stress: #D9903F;
@@ -56,13 +65,13 @@
   --text-space: #C8CBDF;
   --text-cream: #3D3529;
   --text-muted: #7A7060;
-  --text-heading: #2C2418;
+  --text-heading: var(--pastel-ink);
   --border-subtle: rgba(139, 115, 85, 0.15);
   --border-space: rgba(200, 203, 223, 0.12);
 
   /* ---- Typography ---- */
-  --font-display: 'Fredoka', 'Trebuchet MS', sans-serif;
-  --font-body: 'Nunito', system-ui, -apple-system, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Trebuchet MS', sans-serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
 
   --text-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.8rem);
   --text-sm: clamp(0.8rem, 0.75rem + 0.3vw, 0.925rem);

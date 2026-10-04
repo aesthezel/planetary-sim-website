@@ -13,7 +13,7 @@ export function Header() {
             </a>
           ))}
         </nav>
-        <span class="pill pill--cream">Unity 6 Demo</span>
+        <a class="site-header__cta" href="#prensa">{copy.ctaPublisher}<span aria-hidden="true">↗</span></a>
       </div>
     </header>
   );

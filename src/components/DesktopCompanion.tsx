@@ -1,68 +1,45 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { copy } from '../content/copy';
 import { Reveal } from './Reveal';
 import {
   companionAwake,
-  companionClickThrough,
   companionEones,
   companionIslands,
-  companionLayer,
   companionPopulation,
-  prefersReducedMotion,
-  companionTransparent,
-  type LayerMode,
 } from '../state/store';
 
-const WIN = 260;
+interface Win { id: string; title: string; text: string; x: number; y: number; min: boolean; open: boolean; glyph: string; color: string }
+
+const DESK_ICONS = [
+  { glyph: '📁', label: 'Proyectos' },
+  { glyph: '📄', label: 'notas.txt' },
+  { glyph: '🖼️', label: 'Fotos' },
+];
+
+const INITIAL_WINS: Win[] = [
+  { id: 'n1', title: 'Despierta la vida', text: 'Haz clic en el planeta para despertarlo.', x: 14, y: 6, min: false, open: true, glyph: '✨', color: '#F0D6A8' },
+  { id: 'n2', title: 'Islas y eones', text: 'Cada tanto emerge una isla nueva y pasan los eones.', x: 16, y: 50, min: false, open: true, glyph: '🏝️', color: '#E8B9A0' },
+  { id: 'n3', title: 'Anillo orbital', text: 'Clic: anillo orbital. Clic derecho: resumen. Arrástralo para moverlo.', x: 64, y: 6, min: false, open: true, glyph: '💫', color: '#BFD9B0' },
+];
 const DRAG_THRESHOLD = 5;
 const MAX_ISLANDS = 6;
+const FALLBACK_WINDOW_SIZE = 320;
 
 type Panel = keyof typeof copy.radialPanels | null;
 
-gsap.registerPlugin(ScrollTrigger);
-
 export function DesktopCompanion() {
   const stageRef = useRef<HTMLDivElement>(null);
+  const windowRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ active: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
-  const [pos, setPos] = useState({ x: 0.5, y: 0.5 });
+  const [pos, setPos] = useState({ x: 0.62, y: 0.5 });
   const [radial, setRadial] = useState(false);
   const [summary, setSummary] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
   const [emerge, setEmerge] = useState(0);
-  const [spark, setSpark] = useState<{ x: number; y: number } | null>(null);
-  const [desktopClicks, setDesktopClicks] = useState(0);
-  const [blocked, setBlocked] = useState(0);
-  const [winFront, setWinFront] = useState(false);
+  const [wins, setWins] = useState<Win[]>(INITIAL_WINS);
+  const [order, setOrder] = useState<string[]>(['n1', 'n2', 'n3']);
+  const winDrag = useRef<{ id: string; sx: number; sy: number; ox: number; oy: number } | null>(null);
 
-  useEffect(() => {
-    const screen = stageRef.current;
-    if (!screen || prefersReducedMotion.value) return;
-    const context = gsap.context(() => {
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: screen,
-          start: 'top 84%',
-          end: 'bottom 24%',
-          scrub: 0.65,
-        },
-      })
-        .fromTo(screen,
-          { autoAlpha: 0, y: 54, scale: 0.94, rotationX: 2 },
-          { autoAlpha: 1, y: 0, scale: 1, rotationX: 0, duration: 0.68, ease: 'power3.out' },
-        )
-        .to(screen,
-          { autoAlpha: 0, y: -28, scale: 0.98, duration: 0.32, ease: 'power2.in' },
-          0.78,
-        );
-    }, screen);
-    return () => context.revert();
-  }, []);
-
-  const layer = companionLayer.value;
-  const transparent = companionTransparent.value;
-  const through = companionClickThrough.value;
   const awake = companionAwake.value;
   const islands = companionIslands.value;
 
@@ -84,24 +61,12 @@ export function DesktopCompanion() {
     return 0;
   }
 
-  /* Astral mote appears from time to time once awake */
-  useEffect(() => {
-    if (!awake) return;
-    const id = window.setInterval(() => {
-      setSpark((s) => s ?? { x: 94 + Math.random() * 4, y: 14 + Math.random() * 24 });
-    }, 7000);
-    const first = window.setTimeout(() => setSpark({ x: 96, y: 24 }), 1500);
-    return () => {
-      window.clearInterval(id);
-      window.clearTimeout(first);
-    };
-  }, [awake]);
-
   const clampPos = (x: number, y: number) => {
     const rect = stageRef.current?.getBoundingClientRect();
     if (!rect) return { x, y };
-    const mx = Math.min(0.5, WIN / 2 / rect.width);
-    const my = Math.min(0.5, WIN / 2 / rect.height);
+    const windowRect = windowRef.current?.getBoundingClientRect();
+    const mx = Math.min(0.5, (windowRect?.width ?? FALLBACK_WINDOW_SIZE) / 2 / rect.width);
+    const my = Math.min(0.5, (windowRect?.height ?? FALLBACK_WINDOW_SIZE) / 2 / rect.height);
     return {
       x: Math.min(1 - mx, Math.max(mx, x)),
       y: Math.min(1 - my, Math.max(my, y)),
@@ -148,7 +113,7 @@ export function DesktopCompanion() {
     setPanel(null);
     if (!companionAwake.value) {
       companionAwake.value = true;
-      companionPopulation.value = 12;
+      companionPopulation.value = 10;
       return;
     }
     setEmerge((v) => bumpEmerge(v, 20));
@@ -176,40 +141,46 @@ export function DesktopCompanion() {
     }
   };
 
-  const collectSpark = () => {
-    companionEones.value = Math.round((companionEones.value + 0.05) * 100) / 100;
-    setSpark(null);
-  };
-
   const openPanel = (id: keyof typeof copy.radialPanels) => {
     setPanel(id);
     setRadial(false);
   };
 
-  const reset = () => {
-    companionAwake.value = false;
-    companionEones.value = 0;
-    companionIslands.value = 1;
-    companionPopulation.value = 0;
-    setRadial(false);
-    setSummary(false);
-    setPanel(null);
-    setSpark(null);
-    setEmerge(0);
-    setPos({ x: 0.5, y: 0.5 });
-    setDesktopClicks(0);
-    setBlocked(0);
+  const patch = (id: string, p: Partial<Win>) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, ...p } : w)));
+  const focus = (id: string) => setOrder((o) => [...o.filter((x) => x !== id), id]);
+  const startWinDrag = (e: PointerEvent, w: Win) => {
+    if (e.button !== 0 || (e.target as HTMLElement).closest('button')) return;
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    winDrag.current = { id: w.id, sx: e.clientX, sy: e.clientY, ox: w.x, oy: w.y };
+    focus(w.id);
+  };
+  const moveWinDrag = (e: PointerEvent) => {
+    const d = winDrag.current;
+    if (!d) return;
+    const rect = stageRef.current!.getBoundingClientRect();
+    patch(d.id, {
+      x: Math.min(80, Math.max(0, d.ox + ((e.clientX - d.sx) / rect.width) * 100)),
+      y: Math.min(80, Math.max(0, d.oy + ((e.clientY - d.sy) / rect.height) * 100)),
+    });
+  };
+  const endWinDrag = () => { winDrag.current = null; };
+  const showAll = () => {
+    setWins((ws) => ws.map((w) => ({ ...w, open: true, min: false })));
+  };
+  const toggleTask = (w: Win) => {
+    if (!w.open) patch(w.id, { open: true, min: false });
+    else if (w.min) patch(w.id, { min: false });
+    else if (order[order.length - 1] === w.id) patch(w.id, { min: true });
+    if (!w.min) focus(w.id); else focus(w.id);
   };
 
   const onDesktopClick = () => {
-    setDesktopClicks((c) => c + 1);
     setRadial(false);
     setSummary(false);
     setPanel(null);
   };
 
-  const planetZ = layer === 'top' ? 30 : layer === 'normal' ? (winFront ? 10 : 30) : 5;
-  const winZ = layer === 'top' ? 20 : layer === 'normal' ? (winFront ? 30 : 20) : 20;
   const temp = 14 + islands * 1.5;
   const tempLabel = temp < 16 ? 'Frío' : temp < 22 ? 'Templado' : 'Caluroso';
   const aura = awake
@@ -217,7 +188,7 @@ export function DesktopCompanion() {
     : '0 0 18px 2px rgba(142,166,192,0.35)';
 
   return (
-    <section id="companero" class="section section--cream" style={{ background: 'var(--cream-warm)' }}>
+    <section id="companero" class="section section--cream companion-section">
       <div class="container">
         <Reveal>
           <div class="section-header">
@@ -227,184 +198,132 @@ export function DesktopCompanion() {
           </div>
         </Reveal>
 
-        <Reveal delay={0.1}>
-          <div class="companion">
-            <div class="companion__controls" role="group" aria-label="Opciones de ventana">
-              <div class="seg" role="radiogroup" aria-label="Capa de la ventana">
-                {copy.companionLayers.map((l) => (
-                  <button
-                    key={l.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={layer === l.id}
-                    class={`seg__btn ${layer === l.id ? 'is-on' : ''}`}
-                    title={l.note}
-                    onClick={() => {
-                      companionLayer.value = l.id as LayerMode;
-                      setWinFront(false);
-                    }}
-                  >
-                    {l.label}
-                  </button>
-                ))}
+        <div class="companion">
+            <div class="desk" onClick={onDesktopClick}>
+              <div class="desk__menubar" aria-hidden="true">
+                <div class="desk__menu"><b>🪐 Planetary Sim</b><span>Archivo</span><span>Planeta</span><span>Ver</span></div>
+                <span>mar 16:20</span>
               </div>
-              <label class="toggle">
-                <input
-                  type="checkbox"
-                  checked={transparent}
-                  onChange={(e) => (companionTransparent.value = (e.target as HTMLInputElement).checked)}
-                />
-                <span>{copy.companionToggles.transparent}</span>
-              </label>
-              <label class="toggle">
-                <input
-                  type="checkbox"
-                  checked={through}
-                  onChange={(e) => (companionClickThrough.value = (e.target as HTMLInputElement).checked)}
-                />
-                <span>{copy.companionToggles.clickThrough}</span>
-              </label>
-              <button type="button" class="seg__btn" disabled={!awake} onClick={() => { setSummary((s) => !s); setRadial(false); setPanel(null); }}>
-                Resumen
-              </button>
-              <button type="button" class="seg__btn" onClick={reset}>
-                Reiniciar
-              </button>
-            </div>
-
-            <div class="desk" ref={stageRef} onClick={onDesktopClick}>
-              <div class="desk__icons" aria-hidden="true">
-                <span>🗂️<small>Proyectos</small></span>
-                <span>📝<small>Notas</small></span>
-              </div>
-
-              <div
-                class="desk__window"
-                style={{ zIndex: winZ }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setWinFront(true);
-                  setDesktopClicks((c) => c + 1);
-                }}
-              >
-                <div class="desk__titlebar">
-                  <i /> <i /> <i /> <b>Notas.txt</b>
+              <div class="desk__workspace" ref={stageRef}>
+                <div class="desk__icons" aria-hidden="true">
+                  {DESK_ICONS.map((i) => (
+                    <div class="desk__icon" key={i.label}><span>{i.glyph}</span>{i.label}</div>
+                  ))}
                 </div>
-                <p>Reunión 16:00</p>
-                <p>Revisar entregas</p>
-                <p class="desk__counter">
-                  Clics recibidos: <strong>{desktopClicks}</strong>
-                </p>
-              </div>
-
-              <div
-                class={`pwin ${transparent ? '' : 'pwin--solid'} ${through ? 'pwin--through' : ''}`}
-                style={{
-                  zIndex: planetZ,
-                  left: `${pos.x * 100}%`,
-                  top: `${pos.y * 100}%`,
-                  width: `${WIN}px`,
-                  height: `${WIN}px`,
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!through) {
-                    setBlocked((b) => b + 1);
-                    setWinFront(false);
-                  }
-                }}
-              >
-                {spark && awake && (
+                {wins.filter((w) => w.open && !w.min).map((w) => (
+                  <article
+                    key={w.id}
+                    class={`desk__window desk__note `}
+                    style={{ left: `${w.x}%`, top: `${w.y}%`, zIndex: 10 + order.indexOf(w.id) }}
+                    onClick={(e) => { e.stopPropagation(); focus(w.id); }}
+                  >
+                    <header
+                      class="desk__titlebar"
+                      onPointerDown={(e) => startWinDrag(e, w)}
+                      onPointerMove={moveWinDrag}
+                      onPointerUp={endWinDrag}
+                    >
+                      <i class="dot dot--r" />
+                      <button type="button" class="dot dot--y" aria-label="Minimizar" onClick={() => patch(w.id, { min: true })} />
+                      <i class="dot dot--g" />
+                      <span>{w.title}</span>
+                    </header>
+                                        <p>{w.text}</p>
+                  </article>
+                ))}
+                {/* PlanetCanvas fits its shared WebGL canvas to this floating globe viewport. */}
+                <div
+                  ref={windowRef}
+                  id="companion-planet"
+                  class="pwin pwin--through"
+                  style={{ zIndex: 30, left: `${pos.x * 100}%`, top: `${pos.y * 100}%` }}
+                  role="group"
+                  aria-label="Capa transparente del planeta sobre tus ventanas"
+                >
                   <button
                     type="button"
-                    class="mote"
-                    style={{ left: `${spark.x}%`, top: `${spark.y}%` }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      collectSpark();
-                    }}
-                    aria-label="Recoger mota astral"
-                  >
-                    ✧
-                  </button>
-                )}
+                    class={`planet planet--canvas-backed ${awake ? 'is-awake' : ''}`}
+                    aria-label={awake ? 'Planeta: clic para abrir el anillo orbital' : 'Planeta dormido: clic para despertar la vida'}
+                    aria-pressed={awake}
+                    style={{ boxShadow: aura }}
+                    onPointerDown={onPointerDown}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onContextMenu={rightClick}
+                    onKeyDown={onKeyDown}
+                    onClick={(e) => e.stopPropagation()}
+                  />
 
-                <div
-                  id="companion-planet"
-                  class={`planet planet--canvas-backed ${awake ? 'is-awake' : ''}`}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={awake ? 'Planeta: clic para abrir el anillo orbital' : 'Planeta dormido: clic para despertar la vida'}
-                  style={{ boxShadow: aura }}
-                  onPointerDown={onPointerDown}
-                  onPointerMove={onPointerMove}
-                  onPointerUp={onPointerUp}
-                  onContextMenu={rightClick}
-                  onKeyDown={onKeyDown}
-                  onClick={(e) => e.stopPropagation()}
-                />
-
-                {radial && (
-                  <ul class="radial" aria-label="Anillo orbital">
-                    {copy.radialLabels.map((r, i) => {
-                      const a = (-90 + (360 / copy.radialLabels.length) * i) * (Math.PI / 180);
-                      return (
-                        <li
-                          key={r.id}
-                          style={{ left: `${50 + Math.cos(a) * 52}%`, top: `${50 + Math.sin(a) * 52}%` }}
-                        >
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openPanel(r.id as keyof typeof copy.radialPanels);
-                            }}
+                  {radial && (
+                    <ul class="radial" aria-label="Anillo orbital">
+                      {copy.radialLabels.map((r, i) => {
+                        const a = (-90 + (360 / copy.radialLabels.length) * i) * (Math.PI / 180);
+                        return (
+                          <li
+                            key={r.id}
+                            style={{ left: `${50 + Math.cos(a) * 52}%`, top: `${50 + Math.sin(a) * 52}%` }}
                           >
-                            <span aria-hidden="true">{r.glyph}</span> {r.label}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openPanel(r.id as keyof typeof copy.radialPanels);
+                              }}
+                            >
+                              <span aria-hidden="true">{r.glyph}</span> {r.label}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
 
-                {summary && (
-                  <div class="stats-card" onClick={(e) => e.stopPropagation()}>
-                    <div class="stats-card__tiles">
-                      <div class="tile tile--islands"><small>Islas</small><b>{islands}</b></div>
-                      <div class="tile tile--pop"><small>Habitantes</small><b>{formatCompact(companionPopulation.value)}</b></div>
-                      <div class="tile tile--temp"><small>Temperatura</small><b>{temp.toFixed(1)}°</b></div>
-                      <div class="tile tile--eons"><small>Eones</small><b>{companionEones.value.toFixed(2)}</b></div>
+                  {summary && (
+                    <div class="stats-card" onClick={(e) => e.stopPropagation()}>
+                      <div class="stats-card__tiles">
+                        <div class="tile tile--islands"><small>Islas</small><b>{islands}</b></div>
+                        <div class="tile tile--pop"><small>Habitantes</small><b>{formatCompact(companionPopulation.value)}</b></div>
+                        <div class="tile tile--temp"><small>Temperatura</small><b>{temp.toFixed(1)}°</b></div>
+                        <div class="tile tile--eons"><small>Eones</small><b>{companionEones.value.toFixed(2)}</b></div>
+                      </div>
+                      <p>{tempLabel} · Fase Planetaria</p>
+                      <div class="bar" aria-label="Emergencia de isla"><i style={{ width: `${Math.min(emerge, 100)}%` }} /></div>
+                      <small>Clic izquierdo abre el anillo orbital.</small>
                     </div>
-                    <p>{tempLabel} · Fase Planetaria</p>
-                    <div class="bar" aria-label="Emergencia de isla"><i style={{ width: `${Math.min(emerge, 100)}%` }} /></div>
-                    <small>Clic izquierdo abre el anillo orbital.</small>
-                  </div>
-                )}
+                  )}
 
-                {panel && (
-                  <div class="menu-panel" role="dialog" aria-label={copy.radialLabels.find((r) => r.id === panel)?.label}>
-                    <button type="button" class="menu-panel__x" aria-label="Cerrar" onClick={(e) => { e.stopPropagation(); setPanel(null); }}>
-                      ×
+                  {panel && (
+                    <div class="menu-panel" role="dialog" aria-label={copy.radialLabels.find((r) => r.id === panel)?.label}>
+                      <button type="button" class="menu-panel__x" aria-label="Cerrar" onClick={(e) => { e.stopPropagation(); setPanel(null); }}>
+                        ×
+                      </button>
+                      <h4>{copy.radialLabels.find((r) => r.id === panel)?.label}</h4>
+                      <p>{copy.radialPanels[panel]}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <footer class="desk__dock" onClick={(e) => e.stopPropagation()}>
+                <div class="desk__dock-bar">
+                  <button type="button" class="desk__dock-item" style={{ background: '#3F7A62' }} aria-label="Mostrar todas las notas" title="Mostrar todas las notas" onClick={showAll}>🪐</button>
+                  {wins.map((w) => (
+                    <button
+                      key={w.id}
+                      type="button"
+                      class={`desk__dock-item ${w.min ? 'is-min' : ''}`}
+                      style={{ background: w.color }}
+                      aria-label={w.title}
+                      title={w.title}
+                      onClick={() => toggleTask(w)}
+                    >
+                      {w.glyph}
                     </button>
-                    <h4>{copy.radialLabels.find((r) => r.id === panel)?.label}</h4>
-                    <p>{copy.radialPanels[panel]}</p>
-                  </div>
-                )}
-              </div>
-
-              <div class="desk__taskbar" aria-hidden="true">
-                <span>⊞</span>
-                <span class="desk__tray">
-                  {through ? 'Clic a través: activo' : `Ventana captura clics (${blocked})`}
-                </span>
-              </div>
+                  ))}
+                </div>
+              </footer>
             </div>
-
-            <p class="companion__hint">{copy.companionHint}</p>
-            <p class="companion__note text-muted">{copy.companionNote}</p>
-          </div>
-        </Reveal>
+        </div>
       </div>
     </section>
   );
@@ -421,3 +340,7 @@ function formatCompact(n: number): string {
   }
   return `${v.toFixed(v < 10 ? 1 : 0).replace('.', ',').replace(/,0$/, '')}${units[i]}`;
 }
+
+
+
+
