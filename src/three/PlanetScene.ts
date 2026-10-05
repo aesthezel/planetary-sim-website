@@ -15,7 +15,7 @@ import {
   Vector3,
   MathUtils,
 } from 'three';
-import { createPlanet, type PlanetFactoryResult } from './planetFactory';
+import { createPlanet, type IslandData, type PlanetFactoryResult } from './planetFactory';
 
 export type PlanetViewProfile = 'hero' | 'ambient' | 'desktop';
 
@@ -34,7 +34,11 @@ export class PlanetScene {
   private companionIslandCount = 1;
   private companionAwake = false;
 
-  // Fixed orbital framing for the scroll-driven feature story.
+  // Manual rotation added on top of the slow automatic spin (hero interaction).
+  private spinOffset = 0;
+  private tiltOffset = 0;
+
+  // Fixed orbital framing; the world grows with time spent on the landing.
   private readonly CAM_Z_START = 6.8;
   private readonly CAM_Z_MOBILE = 6.3;
   private readonly FOV = 38;
@@ -152,11 +156,18 @@ export class PlanetScene {
 
   private applyStoryIslands(): void {
     let visibleCoasts = 1;
-    for (let i = 1; i < this.planet.islands.length; i++) {
+    for (let i = 0; i < this.planet.islands.length; i++) {
+      const island = this.planet.islands[i];
+      if (i === 0) {
+        // The first island is always present; its landmarks mature over time.
+        this.applyLandmarkGrowth(island, this.storyProgress, 0.2, 0.52);
+        continue;
+      }
       const emergeStart = 0.12 + (i - 1) * 0.12;
       const emergeEnd = emergeStart + 0.1;
       const s = MathUtils.smoothstep(this.storyProgress, emergeStart, emergeEnd);
-      this.planet.islands[i].mesh.scale.setScalar(s);
+      island.mesh.scale.setScalar(s);
+      this.applyLandmarkGrowth(island, this.storyProgress, emergeEnd + 0.06, emergeEnd + 0.32);
       if (s > 0.08) visibleCoasts = i + 1;
     }
     this.planet.animatedMaterials.water.uniforms.uIslandCount.value = visibleCoasts;
@@ -165,14 +176,39 @@ export class PlanetScene {
   private applyDesktopIslands(): void {
     const visible = Math.min(this.planet.islands.length, this.companionIslandCount);
     for (let i = 0; i < this.planet.islands.length; i++) {
-      this.planet.islands[i].mesh.scale.setScalar(i < visible ? 1 : 0);
+      const island = this.planet.islands[i];
+      island.mesh.scale.setScalar(i < visible ? 1 : 0);
+      // On the desktop, landmarks grow as more eones and islands pass.
+      const mountains = i < visible ? 1 : 0;
+      const structures = this.companionIslandCount > i + 1 ? 1 : 0;
+      this.setLandmarkScale(island, mountains, structures);
     }
     this.planet.animatedMaterials.water.uniforms.uIslandCount.value = visible;
+  }
+
+  /** Grow the clay mountains (early) and the tiny structures (later) with the story. */
+  private applyLandmarkGrowth(island: IslandData, progress: number, mountainStart: number, structureStart: number): void {
+    const mountains = MathUtils.smoothstep(progress, mountainStart, mountainStart + 0.18);
+    const structures = MathUtils.smoothstep(progress, structureStart, structureStart + 0.22);
+    this.setLandmarkScale(island, mountains, structures);
+  }
+
+  private setLandmarkScale(island: IslandData, mountains: number, structures: number): void {
+    island.mountains.visible = mountains > 0.001;
+    island.mountains.scale.setScalar(mountains);
+    island.structures.visible = structures > 0.001;
+    island.structures.scale.setScalar(structures);
   }
 
   private applyCompanionAura(): void {
     this.planet.animatedMaterials.aura.uniforms.uOpacity.value = this.companionAwake ? 0.85 : 0.32;
     this.planet.animatedMaterials.aura.uniforms.uWarmth.value = this.companionAwake ? 0.72 : 0.18;
+  }
+
+  /** Spin the globe by hand. Called from a pointer drag on the landing. */
+  dragRotate(deltaX: number, deltaY: number): void {
+    this.spinOffset += deltaX * 0.005;
+    this.tiltOffset = MathUtils.clamp(this.tiltOffset + deltaY * 0.004, -0.55, 0.55);
   }
 
   /* ---- Pulse effect (CTA "Despertar el planeta") ---- */
@@ -227,18 +263,10 @@ export class PlanetScene {
 
     const elapsed = this.clock.getElapsedTime();
 
-    // The globe turns smoothly and slowly; only the water follows Unity's stop-motion clock.
-    this.planet.group.rotation.y = elapsed * 0.04;
-
-    // The tiny ship follows its own slow orbital path.
-    const boatAngle = elapsed * 0.045;
-    const boatR = 1.12;
-    this.planet.boat.position.set(
-      Math.cos(boatAngle) * boatR,
-      Math.sin(boatAngle * 0.3) * 0.02,
-      Math.sin(boatAngle) * boatR,
-    );
-    this.planet.boat.lookAt(0, 0, 0);
+    // The globe turns smoothly and slowly; the visitor can also spin it by hand.
+    // Only the water follows Unity's stop-motion clock.
+    this.planet.group.rotation.y = elapsed * 0.04 + this.spinOffset;
+    this.planet.group.rotation.x = this.tiltOffset;
 
     // Update water shader time
     this.planet.animatedMaterials.water.uniforms.uTime.value = elapsed;

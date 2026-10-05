@@ -16,7 +16,7 @@ export const copy = {
   ctaPulse: 'Darle un pulso al planeta',
   ctaPublisher: 'Contacto publishers',
   ctaExplore: 'Ver cómo evoluciona',
-  hintScroll: 'Desliza para ver el planeta en tu escritorio ↓',
+  hintScroll: 'Arrastra para girar el planeta · Desliza para verlo en tu escritorio ↓',
 
   /* ---- Recorrido visual ---- */
   storyIntro: 'Despierta un mundo. Acompaña una civilización. Conserva su legado.',

@@ -46,6 +46,16 @@
   animation: stars-twinkle 12s ease-in-out -5s infinite alternate-reverse;
 }
 .planet-canvas-wrap canvas { position: relative; z-index: 1; }
+
+/* Invisible layer that lets the visitor spin the globe with the left mouse button.
+   Sits above the canvas but below the hero copy, so links and buttons stay usable.
+   Hidden behind the interior sections once the visitor scrolls past the landing. */
+.hero-drag {
+  position: fixed; inset: 0; z-index: 2;
+  cursor: grab; touch-action: pan-y;
+  user-select: none; -webkit-user-select: none;
+}
+.hero-drag:active { cursor: grabbing; }
 .planet-canvas-wrap--ambient,
 .planet-canvas-wrap--desktop {
   background: transparent;

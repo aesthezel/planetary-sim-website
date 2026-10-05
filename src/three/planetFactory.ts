@@ -5,7 +5,7 @@
  * - Planet core: smooth sphere with softly banded toon material
  * - Water: sphere r=1.02 with custom shader
  * - Islands: 5-7 thin organic coastline and land patches
- * - Boat: ultra-low-poly box + prism orbiting
+ * - Landmarks: clay mountains and tiny structures that emerge over time
  * - Aura: BackSide sphere r=1.08
  * - Atmosphere: sphere r=1.15 (grows during zoom)
  * - Orbital ring: RingGeometry + sprite labels
@@ -34,7 +34,6 @@ import {
   NearestFilter,
   Vector3,
   Vector4,
-  Object3D,
 } from 'three';
 import { createWaterMaterial, createAuraMaterial, createAtmosphereMaterial } from './waterShader';
 
@@ -115,9 +114,63 @@ function createIslandPatchGeometry(radius: number, rand: () => number): BufferGe
   return geometry;
 }
 
+/* ---- Clay landmarks: mountains and tiny structures that grow over time ---- */
+function createIslandDetails(rand: () => number, coastRadius: number, gradientMap: DataTexture): Group {
+  const details = new Group();
+  details.position.y = 0.03;
+
+  // Mountains: soft clay cones that rise once the island settles.
+  const mountains = new Group();
+  const mountainCount = 1 + Math.floor(rand() * 2);
+  for (let m = 0; m < mountainCount; m++) {
+    const height = coastRadius * (0.42 + rand() * 0.4);
+    const radius = height * (0.5 + rand() * 0.3);
+    const mountain = new Mesh(
+      new ConeGeometry(radius, height, 6 + Math.floor(rand() * 2)),
+      new MeshToonMaterial({ color: new Color(m === 0 ? 0x8a7256 : 0x6f8a54), gradientMap }),
+    );
+    const angle = rand() * Math.PI * 2;
+    const dist = coastRadius * 0.4 * rand();
+    mountain.position.set(Math.cos(angle) * dist, height / 2, Math.sin(angle) * dist);
+    mountain.rotation.y = rand() * Math.PI;
+    mountains.add(mountain);
+  }
+  mountains.scale.setScalar(0);
+  mountains.visible = false;
+  details.add(mountains);
+
+  // Small clay structures: little towers that appear once the land matures.
+  const structures = new Group();
+  const structureCount = 2 + Math.floor(rand() * 3);
+  for (let s = 0; s < structureCount; s++) {
+    const width = coastRadius * (0.1 + rand() * 0.07);
+    const height = width * (1.1 + rand() * 0.9);
+    const structure = new Mesh(
+      new BoxGeometry(width, height, width),
+      new MeshToonMaterial({ color: new Color(0xc98a6b), gradientMap }),
+    );
+    const angle = rand() * Math.PI * 2;
+    const dist = coastRadius * 0.55 * rand();
+    structure.position.set(Math.cos(angle) * dist, height / 2, Math.sin(angle) * dist);
+    structure.rotation.y = rand() * Math.PI;
+    structures.add(structure);
+  }
+  structures.scale.setScalar(0);
+  structures.visible = false;
+  details.add(structures);
+
+  details.userData.mountains = mountains;
+  details.userData.structures = structures;
+
+  return details;
+}
+
 /* ---- Island data ---- */
 export interface IslandData {
   mesh: Group;
+  details: Group;
+  mountains: Group;
+  structures: Group;
   basePosition: Vector3;
   coastRadius: number;
   initiallyVisible: boolean;
@@ -129,7 +182,6 @@ export interface PlanetFactoryResult {
   planetCore: Mesh;
   waterMesh: Mesh;
   islands: IslandData[];
-  boat: Object3D;
   aura: Mesh;
   atmosphere: Mesh;
   orbitalRing: Mesh;
@@ -220,6 +272,10 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
     islandGroup.position.copy(pos);
     islandGroup.quaternion.setFromUnitVectors(new Vector3(0, 1, 0), pos.clone().normalize());
 
+    // Clay mountains and small structures grow on the land over time.
+    const details = createIslandDetails(rand, coastRadius, gradientMap);
+    islandGroup.add(details);
+
     // Only first island visible initially
     const initiallyVisible = i === 0;
     if (!initiallyVisible) {
@@ -227,7 +283,15 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
     }
 
     group.add(islandGroup);
-    islands.push({ mesh: islandGroup, basePosition: pos, coastRadius, initiallyVisible });
+    islands.push({
+      mesh: islandGroup,
+      details,
+      mountains: details.userData.mountains as Group,
+      structures: details.userData.structures as Group,
+      basePosition: pos,
+      coastRadius,
+      initiallyVisible,
+    });
   }
 
   const islandInfo = waterMat.uniforms.uIslands.value as Vector4[];
@@ -236,23 +300,6 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
     islandInfo[index].set(direction.x, direction.y, direction.z, island.coastRadius * 1.18 + 0.025);
   });
   waterMat.uniforms.uIslandCount.value = Math.min(islands.length, islandInfo.length);
-
-  /* ---- Boat ---- */
-  const boatGroup = new Group();
-  const hullGeo = new BoxGeometry(0.04, 0.015, 0.02);
-  const hullMat = new MeshToonMaterial({ color: new Color(0x8b6240), gradientMap });
-  const hull = new Mesh(hullGeo, hullMat);
-  boatGroup.add(hull);
-
-  const sailGeo = new ConeGeometry(0.012, 0.035, 3);
-  const sailMat = new MeshToonMaterial({ color: new Color(0xfff8e7), gradientMap });
-  const sail = new Mesh(sailGeo, sailMat);
-  sail.position.set(0, 0.02, 0);
-  boatGroup.add(sail);
-
-  // Start position on orbit
-  boatGroup.position.set(1.12, 0, 0);
-  group.add(boatGroup);
 
   /* ---- Aura ---- */
   const auraGeo = new SphereGeometry(1.08, 32, 32);
@@ -349,7 +396,6 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
     planetCore,
     waterMesh,
     islands,
-    boat: boatGroup,
     aura,
     atmosphere,
     orbitalRing,

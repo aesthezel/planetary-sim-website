@@ -159,9 +159,12 @@ export function DesktopCompanion() {
     const d = winDrag.current;
     if (!d) return;
     const rect = stageRef.current!.getBoundingClientRect();
+    const windowRect = (e.currentTarget as HTMLElement).closest('.desk__window')?.getBoundingClientRect();
+    const maxX = 100 - ((windowRect?.width ?? 0) / rect.width) * 100;
+    const maxY = 100 - ((windowRect?.height ?? 0) / rect.height) * 100;
     patch(d.id, {
-      x: Math.min(80, Math.max(0, d.ox + ((e.clientX - d.sx) / rect.width) * 100)),
-      y: Math.min(80, Math.max(0, d.oy + ((e.clientY - d.sy) / rect.height) * 100)),
+      x: Math.min(maxX, Math.max(0, d.ox + ((e.clientX - d.sx) / rect.width) * 100)),
+      y: Math.min(maxY, Math.max(0, d.oy + ((e.clientY - d.sy) / rect.height) * 100)),
     });
   };
   const endWinDrag = () => { winDrag.current = null; };
@@ -186,6 +189,19 @@ export function DesktopCompanion() {
   const aura = awake
     ? `0 0 ${24 + islands * 6}px ${6 + islands}px rgba(${temp < 16 ? '110,143,171' : '212,160,110'},0.45)`
     : '0 0 18px 2px rgba(142,166,192,0.35)';
+  const popupPlacement = (() => {
+    const stage = stageRef.current?.getBoundingClientRect();
+    const planetSize = windowRef.current?.getBoundingClientRect().width ?? FALLBACK_WINDOW_SIZE;
+    if (!stage) return { side: 'right', width: 250 } as const;
+
+    const gap = 18;
+    const centerX = pos.x * stage.width;
+    const leftSpace = centerX - planetSize / 2 - gap;
+    const rightSpace = stage.width - centerX - planetSize / 2 - gap;
+    const width = Math.max(0, Math.min(250, stage.width * 0.34, Math.max(leftSpace, rightSpace)));
+    const side = rightSpace >= width || rightSpace >= leftSpace ? 'right' : 'left';
+    return { side, width } as const;
+  })();
 
   return (
     <section id="companero" class="section section--cream companion-section">
@@ -213,8 +229,8 @@ export function DesktopCompanion() {
                 {wins.filter((w) => w.open && !w.min).map((w) => (
                   <article
                     key={w.id}
-                    class={`desk__window desk__note `}
-                    style={{ left: `${w.x}%`, top: `${w.y}%`, zIndex: 10 + order.indexOf(w.id) }}
+                    class="desk__window desk__note"
+                    style={{ left: `${w.x}%`, top: `${w.y}%`, zIndex: 10 + order.indexOf(w.id), borderTop: `3px solid ${w.color}` }}
                     onClick={(e) => { e.stopPropagation(); focus(w.id); }}
                   >
                     <header
@@ -223,10 +239,9 @@ export function DesktopCompanion() {
                       onPointerMove={moveWinDrag}
                       onPointerUp={endWinDrag}
                     >
-                      <i class="dot dot--r" />
-                      <button type="button" class="dot dot--y" aria-label="Minimizar" onClick={() => patch(w.id, { min: true })} />
-                      <i class="dot dot--g" />
-                      <span>{w.title}</span>
+                      <span class="desk__window-mark" style={{ background: w.color }} aria-hidden="true">{w.glyph}</span>
+                      <span class="desk__window-title">{w.title}</span>
+                      <button type="button" class="desk__minimize" aria-label={`Minimizar ${w.title}`} onClick={() => patch(w.id, { min: true })}>−</button>
                     </header>
                                         <p>{w.text}</p>
                   </article>
@@ -261,7 +276,7 @@ export function DesktopCompanion() {
                         return (
                           <li
                             key={r.id}
-                            style={{ left: `${50 + Math.cos(a) * 52}%`, top: `${50 + Math.sin(a) * 52}%` }}
+                            style={{ left: `${50 + Math.cos(a) * 45}%`, top: `${50 + Math.sin(a) * 45}%` }}
                           >
                             <button
                               type="button"
@@ -279,7 +294,7 @@ export function DesktopCompanion() {
                   )}
 
                   {summary && (
-                    <div class="stats-card" onClick={(e) => e.stopPropagation()}>
+                    <div class={`stats-card stats-card--${popupPlacement.side}`} style={{ width: `${popupPlacement.width}px` }} onClick={(e) => e.stopPropagation()}>
                       <div class="stats-card__tiles">
                         <div class="tile tile--islands"><small>Islas</small><b>{islands}</b></div>
                         <div class="tile tile--pop"><small>Habitantes</small><b>{formatCompact(companionPopulation.value)}</b></div>
@@ -293,7 +308,7 @@ export function DesktopCompanion() {
                   )}
 
                   {panel && (
-                    <div class="menu-panel" role="dialog" aria-label={copy.radialLabels.find((r) => r.id === panel)?.label}>
+                    <div class={`menu-panel menu-panel--${popupPlacement.side}`} style={{ width: `${popupPlacement.width}px` }} role="dialog" aria-label={copy.radialLabels.find((r) => r.id === panel)?.label}>
                       <button type="button" class="menu-panel__x" aria-label="Cerrar" onClick={(e) => { e.stopPropagation(); setPanel(null); }}>
                         ×
                       </button>

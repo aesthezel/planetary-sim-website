@@ -39,6 +39,8 @@ export function PlanetCanvas() {
 
     const scene = new PlanetScene(canvas);
     sceneInstance = scene;
+    // Honour whatever evolution the landing already reached (e.g. reduced motion).
+    scene.setStoryProgress(storyProgress.value);
 
     let currentProfile: CanvasMode | null = null;
     let currentMode: CanvasMode | null = null;
@@ -158,7 +160,13 @@ export function PlanetCanvas() {
         && (Math.abs(nextWidth - bufferWidth) > 12 || Math.abs(nextHeight - bufferHeight) > 12);
       const resizeForStableAmbient = mode === 'ambient'
         && (Math.abs(nextWidth - bufferWidth) > 12 || Math.abs(nextHeight - bufferHeight) > 12);
-      const resizeBuffer = profileChanged || resizeForStableDesktop || resizeForStableAmbient;
+      // The hero canvas interpolates down to the floating planet while scrolling.
+      // When returning home, restore its full-resolution drawing buffer once the
+      // canvas reaches the full viewport; otherwise a small desktop buffer can
+      // remain stretched across the hero.
+      const resizeForHeroFit = mode === 'hero' && blend <= 0.015
+        && (Math.abs(nextWidth - bufferWidth) > 12 || Math.abs(nextHeight - bufferHeight) > 12);
+      const resizeBuffer = profileChanged || resizeForStableDesktop || resizeForStableAmbient || resizeForHeroFit;
       if (resizeBuffer) {
         bufferWidth = nextWidth;
         bufferHeight = nextHeight;

@@ -189,16 +189,39 @@
 .desk__note { width: min(230px, 32%); }
 .desk__titlebar { justify-content: flex-start; gap: 8px; padding: 10px 14px; background: #EDE6FA; font-weight: 500; color: #5E5674; }
 .desk__titlebar span { flex: 0 1 auto; margin-left: 6px; }
-.dot { width: 12px; height: 12px; border-radius: 50%; padding: 0 !important; border: 0; display: inline-block; }
-.dot--r { background: #F4A9A0; } .dot--g { background: #9FCB8C; }
-.desk__titlebar button.dot--y { background: #FFE3A3; cursor: pointer; width: 12px; height: 12px; }
-.desk__titlebar button.dot--y:hover { background: #ffd36a; }
 .desk__dock { position: absolute; left: 0; right: 0; bottom: 18px; z-index: 40; display: flex; justify-content: center; pointer-events: none; }
 .desk__dock-bar { display: flex; gap: 12px; padding: 12px; border-radius: 22px; background: rgba(46,38,69,0.12); border: 1px solid rgba(46,38,69,0.12); backdrop-filter: blur(20px); pointer-events: auto; }
 .desk__dock-item { width: 48px; height: 48px; border: 0; border-radius: 14px; font-size: 1.4rem; cursor: pointer; transition: transform 150ms; }
 .desk__dock-item:hover { transform: translateY(-4px); }
 .desk__dock-item.is-min { opacity: 0.55; }
 @media (max-width: 768px) { .desk { height: 560px; } .desk__icons { display: none; } .desk__note { width: 62%; } .desk__dock-item { width: 42px; height: 42px; } }
+
+/* Notes use a simple desktop-card treatment rather than macOS traffic lights. */
+.desk__note { border-radius: 14px; background: #fffaf2; box-shadow: 0 14px 32px rgba(73, 55, 94, 0.16); }
+.desk__titlebar {
+  gap: 0.6rem; padding: 0.65rem 0.8rem; border-bottom: 1px solid rgba(46, 38, 69, 0.09);
+  background: rgba(255, 255, 255, 0.56); color: #514967; cursor: grab;
+}
+.desk__window-mark { display: grid; flex: none; place-items: center; width: 26px; height: 26px; border-radius: 8px; font-size: 0.85rem; }
+.desk__titlebar span.desk__window-title { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 0.78rem; font-weight: 700; }
+.desk__titlebar button.desk__minimize {
+  display: grid; place-items: center; flex: none; width: 26px; height: 26px; border: 1px solid rgba(46, 38, 69, 0.1);
+  border-radius: 8px; background: rgba(255, 255, 255, 0.75); color: #514967; font-size: 1rem; line-height: 1;
+}
+.desk__titlebar button.desk__minimize:hover { background: #fff; }
+.desk__note p { padding: 0.75rem 0.9rem 0.95rem; color: #514967; font-size: var(--text-sm); line-height: 1.55; }
+
+/* Keep the orbital actions outside the rendered globe. */
+.radial { width: 250%; z-index: 4; }
+.radial li { z-index: 1; }
+.radial button { position: relative; }
+
+/* Summary and detail cards sit beside the planet instead of covering it. */
+.stats-card, .menu-panel {
+  top: 50%; left: calc(100% + 18px); z-index: 8; transform: translateY(-50%);
+  max-width: min(250px, calc(100vw - 24px));
+}
+.stats-card--left, .menu-panel--left { right: calc(100% + 18px); left: auto; }
 
 /* ---- Flujo de la vida ---- */
 .flow-section { background: var(--pastel-peach); }
