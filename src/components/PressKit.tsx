@@ -7,7 +7,7 @@ export function PressKit() {
       <div class="container container--narrow">
         <Reveal>
           <div class="section-header">
-            <span class="section-header__label">Kit de Prensa</span>
+            <span class="section-header__label">{copy.pressLabel}</span>
             <h2 class="section-header__title">{copy.pressTitle}</h2>
           </div>
         </Reveal>
@@ -21,7 +21,7 @@ export function PressKit() {
               marginBottom: 'var(--space-md)',
             }}
           >
-            <h3 class="feature-card__title">Descripción corta</h3>
+            <h3 class="feature-card__title">{copy.pressDescriptionLabel}</h3>
             <p class="feature-card__text" style={{ fontSize: 'var(--text-base)', marginBottom: 'var(--space-sm)' }}>
               {copy.pressShortDescription}
             </p>
@@ -34,7 +34,7 @@ export function PressKit() {
                 color: 'var(--wood-dark)',
               }}
             >
-              <strong>Guía editorial:</strong> {copy.pressNote}
+              <strong>{copy.pressEditorialLabel}</strong> {copy.pressNote}
             </div>
           </div>
         </Reveal>
@@ -55,15 +55,15 @@ export function PressKit() {
           >
             <div>
               <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-lg)', color: 'var(--text-heading)' }}>
-                Contacto de prensa y publishers
+                {copy.pressContactTitle}
               </h4>
-              <p class="text-sm text-muted">Solicita acceso anticipado o material de prensa oficial.</p>
+              <p class="text-sm text-muted">{copy.pressContactSubtitle}</p>
             </div>
             <a
               href="mailto:contact@planetarysim.com?subject=Planetary%20Sim%20-%20Publisher/Press%20Inquiry"
               class="btn btn--primary"
             >
-              Contactar equipo
+              {copy.pressContactCta}
             </a>
           </div>
         </Reveal>

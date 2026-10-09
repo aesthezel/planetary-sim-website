@@ -24,30 +24,31 @@ export function StoryHighlights({ onJump }: StoryHighlightsProps) {
           </>
         ) : (
           <>
-            <span class="story-window__eyebrow">RECORRIDO DE LA DEMO</span>
+            <span class="story-window__eyebrow">{copy.storyDemoTitle}</span>
             <p>{copy.storyIntro}</p>
-            <span class="story-window__fact">Desplázate para descubrir cada sistema</span>
+            <span class="story-window__fact">{copy.storyDemoHint}</span>
           </>
         )}
       </div>
 
-      <nav class="story-nav" aria-label="Pasos destacados del juego">
+      <nav class="story-nav" aria-label={copy.storyNavAria}>
         <div class="story-nav__track" aria-hidden="true">
           <span style={{ transform: `scaleX(${activeStep / copy.storyBeats.length})` }} />
         </div>
         {copy.storyBeats.map((step, index) => {
           const number = index + 1;
+          const eyebrowPart = step.eyebrow.includes('·') ? step.eyebrow.split('·')[1].trim() : step.eyebrow;
           return (
             <button
               key={step.eyebrow}
               type="button"
               class={`story-nav__step ${activeStep === number ? 'is-active' : ''} ${activeStep > number ? 'is-complete' : ''}`}
-              aria-label={`Ir al paso ${number}: ${step.title}`}
+              aria-label={`${copy.storyJumpAria} ${number}: ${step.title}`}
               aria-current={activeStep === number ? 'step' : undefined}
               onClick={() => onJump(number)}
             >
               <span>{String(number).padStart(2, '0')}</span>
-              <small>{step.eyebrow.split('·')[1].trim()}</small>
+              <small>{eyebrowPart}</small>
             </button>
           );
         })}

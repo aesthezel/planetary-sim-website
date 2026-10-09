@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { copy } from '../content/copy';
+import { formatNumber } from '../i18n';
 import { Reveal } from './Reveal';
 import {
   companionAwake,
@@ -8,18 +9,18 @@ import {
   companionPopulation,
 } from '../state/store';
 
-interface Win { id: string; title: string; text: string; x: number; y: number; min: boolean; open: boolean; glyph: string; color: string }
+interface WinState {
+  id: string;
+  x: number;
+  y: number;
+  min: boolean;
+  open: boolean;
+}
 
-const DESK_ICONS = [
-  { glyph: '📁', label: 'Proyectos' },
-  { glyph: '📄', label: 'notas.txt' },
-  { glyph: '🖼️', label: 'Fotos' },
-];
-
-const INITIAL_WINS: Win[] = [
-  { id: 'n1', title: 'Despierta la vida', text: 'Haz clic en el planeta para despertarlo.', x: 14, y: 6, min: false, open: true, glyph: '✨', color: '#F0D6A8' },
-  { id: 'n2', title: 'Islas y eones', text: 'Cada tanto emerge una isla nueva y pasan los eones.', x: 16, y: 50, min: false, open: true, glyph: '🏝️', color: '#E8B9A0' },
-  { id: 'n3', title: 'Anillo orbital', text: 'Clic: anillo orbital. Clic derecho: resumen. Arrástralo para moverlo.', x: 64, y: 6, min: false, open: true, glyph: '💫', color: '#BFD9B0' },
+const INITIAL_WINS: WinState[] = [
+  { id: 'n1', x: 14, y: 6, min: false, open: true },
+  { id: 'n2', x: 16, y: 50, min: false, open: true },
+  { id: 'n3', x: 64, y: 6, min: false, open: true },
 ];
 const DRAG_THRESHOLD = 5;
 const MAX_ISLANDS = 6;
@@ -36,12 +37,24 @@ export function DesktopCompanion() {
   const [summary, setSummary] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
   const [emerge, setEmerge] = useState(0);
-  const [wins, setWins] = useState<Win[]>(INITIAL_WINS);
+  const [wins, setWins] = useState<WinState[]>(INITIAL_WINS);
   const [order, setOrder] = useState<string[]>(['n1', 'n2', 'n3']);
   const winDrag = useRef<{ id: string; sx: number; sy: number; ox: number; oy: number } | null>(null);
 
   const awake = companionAwake.value;
   const islands = companionIslands.value;
+
+  const getWinData = (id: string) => {
+    return (
+      copy.companionWins.find((c) => c.id === id) ?? {
+        id,
+        title: id,
+        text: '',
+        glyph: '📄',
+        color: '#BFD9B0',
+      }
+    );
+  };
 
   /* Passive simulation: eones, population and island emergence */
   useEffect(() => {
@@ -146,9 +159,9 @@ export function DesktopCompanion() {
     setRadial(false);
   };
 
-  const patch = (id: string, p: Partial<Win>) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, ...p } : w)));
+  const patch = (id: string, p: Partial<WinState>) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, ...p } : w)));
   const focus = (id: string) => setOrder((o) => [...o.filter((x) => x !== id), id]);
-  const startWinDrag = (e: PointerEvent, w: Win) => {
+  const startWinDrag = (e: PointerEvent, w: WinState) => {
     if (e.button !== 0 || (e.target as HTMLElement).closest('button')) return;
     e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -171,7 +184,7 @@ export function DesktopCompanion() {
   const showAll = () => {
     setWins((ws) => ws.map((w) => ({ ...w, open: true, min: false })));
   };
-  const toggleTask = (w: Win) => {
+  const toggleTask = (w: WinState) => {
     if (!w.open) patch(w.id, { open: true, min: false });
     else if (w.min) patch(w.id, { min: false });
     else if (order[order.length - 1] === w.id) patch(w.id, { min: true });
@@ -185,7 +198,7 @@ export function DesktopCompanion() {
   };
 
   const temp = 14 + islands * 1.5;
-  const tempLabel = temp < 16 ? 'Frío' : temp < 22 ? 'Templado' : 'Caluroso';
+  const tempLabel = temp < 16 ? copy.companionTempCold : temp < 22 ? copy.companionTempTemperate : copy.companionTempHot;
   const aura = awake
     ? `0 0 ${24 + islands * 6}px ${6 + islands}px rgba(${temp < 16 ? '110,143,171' : '212,160,110'},0.45)`
     : '0 0 18px 2px rgba(142,166,192,0.35)';
@@ -217,35 +230,50 @@ export function DesktopCompanion() {
         <div class="companion">
             <div class="desk" onClick={onDesktopClick}>
               <div class="desk__menubar" aria-hidden="true">
-                <div class="desk__menu"><b>🪐 Planetary Sim</b><span>Archivo</span><span>Planeta</span><span>Ver</span></div>
-                <span>mar 16:20</span>
+                <div class="desk__menu">
+                  <b>🪐 Planetary Sim</b>
+                  <span>{copy.deskMenuFile}</span>
+                  <span>{copy.deskMenuPlanet}</span>
+                  <span>{copy.deskMenuView}</span>
+                </div>
+                <span>{copy.deskClock}</span>
               </div>
               <div class="desk__workspace" ref={stageRef}>
                 <div class="desk__icons" aria-hidden="true">
-                  {DESK_ICONS.map((i) => (
+                  {copy.deskIcons.map((i) => (
                     <div class="desk__icon" key={i.label}><span>{i.glyph}</span>{i.label}</div>
                   ))}
                 </div>
-                {wins.filter((w) => w.open && !w.min).map((w) => (
-                  <article
-                    key={w.id}
-                    class="desk__window desk__note"
-                    style={{ left: `${w.x}%`, top: `${w.y}%`, zIndex: 10 + order.indexOf(w.id), borderTop: `3px solid ${w.color}` }}
-                    onClick={(e) => { e.stopPropagation(); focus(w.id); }}
-                  >
-                    <header
-                      class="desk__titlebar"
-                      onPointerDown={(e) => startWinDrag(e, w)}
-                      onPointerMove={moveWinDrag}
-                      onPointerUp={endWinDrag}
+                {wins.filter((w) => w.open && !w.min).map((w) => {
+                  const data = getWinData(w.id);
+                  return (
+                    <article
+                      key={w.id}
+                      class="desk__window desk__note"
+                      style={{ left: `${w.x}%`, top: `${w.y}%`, zIndex: 10 + order.indexOf(w.id), borderTop: `3px solid ${data.color}` }}
+                      onClick={(e) => { e.stopPropagation(); focus(w.id); }}
                     >
-                      <span class="desk__window-mark" style={{ background: w.color }} aria-hidden="true">{w.glyph}</span>
-                      <span class="desk__window-title">{w.title}</span>
-                      <button type="button" class="desk__minimize" aria-label={`Minimizar ${w.title}`} onClick={() => patch(w.id, { min: true })}>−</button>
-                    </header>
-                                        <p>{w.text}</p>
-                  </article>
-                ))}
+                      <header
+                        class="desk__titlebar"
+                        onPointerDown={(e) => startWinDrag(e, w)}
+                        onPointerMove={moveWinDrag}
+                        onPointerUp={endWinDrag}
+                      >
+                        <span class="desk__window-mark" style={{ background: data.color }} aria-hidden="true">{data.glyph}</span>
+                        <span class="desk__window-title">{data.title}</span>
+                        <button
+                          type="button"
+                          class="desk__minimize"
+                          aria-label={`${copy.companionMinimizeLabel} ${data.title}`}
+                          onClick={() => patch(w.id, { min: true })}
+                        >
+                          −
+                        </button>
+                      </header>
+                      <p>{data.text}</p>
+                    </article>
+                  );
+                })}
                 {/* PlanetCanvas fits its shared WebGL canvas to this floating globe viewport. */}
                 <div
                   ref={windowRef}
@@ -253,12 +281,12 @@ export function DesktopCompanion() {
                   class="pwin pwin--through"
                   style={{ zIndex: 30, left: `${pos.x * 100}%`, top: `${pos.y * 100}%` }}
                   role="group"
-                  aria-label="Capa transparente del planeta sobre tus ventanas"
+                  aria-label={copy.companionPlanetLayerAria}
                 >
                   <button
                     type="button"
                     class={`planet planet--canvas-backed ${awake ? 'is-awake' : ''}`}
-                    aria-label={awake ? 'Planeta: clic para abrir el anillo orbital' : 'Planeta dormido: clic para despertar la vida'}
+                    aria-label={awake ? copy.companionPlanetAwakeAria : copy.companionPlanetSleepAria}
                     aria-pressed={awake}
                     style={{ boxShadow: aura }}
                     onPointerDown={onPointerDown}
@@ -270,7 +298,7 @@ export function DesktopCompanion() {
                   />
 
                   {radial && (
-                    <ul class="radial" aria-label="Anillo orbital">
+                    <ul class="radial" aria-label={copy.companionRadialAria}>
                       {copy.radialLabels.map((r, i) => {
                         const a = (-90 + (360 / copy.radialLabels.length) * i) * (Math.PI / 180);
                         return (
@@ -296,20 +324,20 @@ export function DesktopCompanion() {
                   {summary && (
                     <div class={`stats-card stats-card--${popupPlacement.side}`} style={{ width: `${popupPlacement.width}px` }} onClick={(e) => e.stopPropagation()}>
                       <div class="stats-card__tiles">
-                        <div class="tile tile--islands"><small>Islas</small><b>{islands}</b></div>
-                        <div class="tile tile--pop"><small>Habitantes</small><b>{formatCompact(companionPopulation.value)}</b></div>
-                        <div class="tile tile--temp"><small>Temperatura</small><b>{temp.toFixed(1)}°</b></div>
-                        <div class="tile tile--eons"><small>Eones</small><b>{companionEones.value.toFixed(2)}</b></div>
+                        <div class="tile tile--islands"><small>{copy.companionStatsIslands}</small><b>{islands}</b></div>
+                        <div class="tile tile--pop"><small>{copy.companionStatsInhabitants}</small><b>{formatCompact(companionPopulation.value)}</b></div>
+                        <div class="tile tile--temp"><small>{copy.companionStatsTemperature}</small><b>{formatNumber(temp, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}°</b></div>
+                        <div class="tile tile--eons"><small>{copy.companionStatsEons}</small><b>{formatNumber(companionEones.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></div>
                       </div>
-                      <p>{tempLabel} · Fase Planetaria</p>
-                      <div class="bar" aria-label="Emergencia de isla"><i style={{ width: `${Math.min(emerge, 100)}%` }} /></div>
-                      <small>Clic izquierdo abre el anillo orbital.</small>
+                      <p>{tempLabel} · {copy.companionStatsPlanetaryPhase}</p>
+                      <div class="bar" aria-label={copy.companionStatsIslandEmergence}><i style={{ width: `${Math.min(emerge, 100)}%` }} /></div>
+                      <small>{copy.companionStatsLeftClickHint}</small>
                     </div>
                   )}
 
                   {panel && (
                     <div class={`menu-panel menu-panel--${popupPlacement.side}`} style={{ width: `${popupPlacement.width}px` }} role="dialog" aria-label={copy.radialLabels.find((r) => r.id === panel)?.label}>
-                      <button type="button" class="menu-panel__x" aria-label="Cerrar" onClick={(e) => { e.stopPropagation(); setPanel(null); }}>
+                      <button type="button" class="menu-panel__x" aria-label={copy.companionCloseLabel} onClick={(e) => { e.stopPropagation(); setPanel(null); }}>
                         ×
                       </button>
                       <h4>{copy.radialLabels.find((r) => r.id === panel)?.label}</h4>
@@ -321,20 +349,23 @@ export function DesktopCompanion() {
 
               <footer class="desk__dock" onClick={(e) => e.stopPropagation()}>
                 <div class="desk__dock-bar">
-                  <button type="button" class="desk__dock-item" style={{ background: '#3F7A62' }} aria-label="Mostrar todas las notas" title="Mostrar todas las notas" onClick={showAll}>🪐</button>
-                  {wins.map((w) => (
-                    <button
-                      key={w.id}
-                      type="button"
-                      class={`desk__dock-item ${w.min ? 'is-min' : ''}`}
-                      style={{ background: w.color }}
-                      aria-label={w.title}
-                      title={w.title}
-                      onClick={() => toggleTask(w)}
-                    >
-                      {w.glyph}
-                    </button>
-                  ))}
+                  <button type="button" class="desk__dock-item" style={{ background: '#3F7A62' }} aria-label={copy.companionShowAllLabel} title={copy.companionShowAllLabel} onClick={showAll}>🪐</button>
+                  {wins.map((w) => {
+                    const data = getWinData(w.id);
+                    return (
+                      <button
+                        key={w.id}
+                        type="button"
+                        class={`desk__dock-item ${w.min ? 'is-min' : ''}`}
+                        style={{ background: data.color }}
+                        aria-label={data.title}
+                        title={data.title}
+                        onClick={() => toggleTask(w)}
+                      >
+                        {data.glyph}
+                      </button>
+                    );
+                  })}
                 </div>
               </footer>
             </div>
@@ -345,7 +376,7 @@ export function DesktopCompanion() {
 }
 
 function formatCompact(n: number): string {
-  if (n < 1000) return String(n);
+  if (n < 1000) return formatNumber(n);
   const units = ['K', 'M', 'B'];
   let v = n;
   let i = -1;
@@ -353,9 +384,5 @@ function formatCompact(n: number): string {
     v /= 1000;
     i++;
   }
-  return `${v.toFixed(v < 10 ? 1 : 0).replace('.', ',').replace(/,0$/, '')}${units[i]}`;
+  return `${formatNumber(v, { maximumFractionDigits: v < 10 ? 1 : 0 })}${units[i]}`;
 }
-
-
-
-

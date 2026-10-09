@@ -24,7 +24,7 @@ export function Footer() {
             fontSize: 'var(--text-xs)',
           }}
         >
-          Volver a la órbita ↑
+          {copy.footerBackToTop}
         </button>
       </div>
     </footer>

@@ -7,7 +7,7 @@ export function Faq() {
       <div class="container container--narrow">
         <Reveal>
           <div class="section-header">
-            <span class="section-header__label">Dudas Habituales</span>
+            <span class="section-header__label">{copy.faqLabel}</span>
             <h2 class="section-header__title">{copy.faqTitle}</h2>
           </div>
         </Reveal>

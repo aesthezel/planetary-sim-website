@@ -7,7 +7,7 @@ export function Status() {
       <div class="container container--narrow">
         <Reveal>
           <div class="section-header">
-            <span class="section-header__label">Ficha Técnica</span>
+            <span class="section-header__label">{copy.statusLabel}</span>
             <h2 class="section-header__title">{copy.statusTitle}</h2>
             <p class="section-header__subtitle">{copy.statusDescription}</p>
           </div>

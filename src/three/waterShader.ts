@@ -67,9 +67,9 @@ const waterFragmentShader = /* glsl */ `
     if (enabled < 0.5) return;
     float angle = acos(clamp(dot(radial, normalize(island.xyz)), -1.0, 1.0));
     coast = min(coast, max(angle - island.w, 0.0));
-    float shore = 1.0 - smoothstep(island.w + 0.012, island.w + 0.095, angle);
-    float band = floor(clamp(shore * (0.66 + breakup * 0.42), 0.0, 1.0) * 3.0 + 0.5) / 3.0;
-    foam = max(foam, band);
+    // Soft, wide foam band: masks the geometric waterline and stays cozy.
+    float shore = 1.0 - smoothstep(island.w, island.w + 0.16, angle);
+    foam = max(foam, shore * (0.6 + breakup * 0.4));
   }
 
   void main() {
@@ -105,9 +105,9 @@ const waterFragmentShader = /* glsl */ `
 
     float fresnel = pow(1.0 - max(dot(normalize(vNormalView), normalize(vViewDir)), 0.0), 2.0);
     float rippleNoise = noise3(vLocalPosition * 10.0 + vec3(t * 0.17, 0.0, 0.0));
-    float ripple = step(0.76, fract(coast * 15.0 - t * 0.17)) * exp(-coast * 4.0) * 0.16;
+    float ripple = (0.5 + 0.5 * sin(coast * 15.0 - t * 1.2)) * exp(-coast * 4.0) * 0.1;
     water = mix(water, vec3(0.75, 0.94, 1.0), fresnel * 0.28 + ripple + rippleNoise * 0.025);
-    water = mix(water, vec3(0.81, 0.84, 0.78), foam * 0.9);
+    water = mix(water, vec3(0.89, 0.87, 0.79), foam * 0.85);
     gl_FragColor = vec4(water, 0.96);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>

@@ -9,13 +9,14 @@ import { Status } from './components/Status';
 import { PressKit } from './components/PressKit';
 import { Faq } from './components/Faq';
 import { Footer } from './components/Footer';
+import { copy } from './content/copy';
 
 export function App() {
   return (
     <>
       {/* A11y skip link */}
-      <a href="#que-es" class="skip-link">
-        Saltar al contenido principal
+      <a href="#main-content" class="skip-link">
+        {copy.skipLink}
       </a>
 
       {/* Persistent / Appearing Header */}
@@ -42,4 +43,3 @@ export function App() {
     </>
   );
 }
-

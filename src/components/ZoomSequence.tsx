@@ -113,7 +113,7 @@ export function ZoomSequence() {
               {copy.ctaPulse} <span aria-hidden="true">✧</span>
             </button>
           </div>
-          <span class="hero-platform">Simulación incremental cozy · Un jugador</span>
+          <span class="hero-platform">{copy.heroPlatform}</span>
         </div>
         <span class="hero-dom__hint"><span aria-hidden="true">↻</span> {copy.hintScroll}</span>
       </div>

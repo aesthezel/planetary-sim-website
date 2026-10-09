@@ -133,8 +133,7 @@ export class PlanetScene {
     if (this.viewProfile === 'desktop') return;
     this.applyStoryIslands();
 
-    // Keep stars and orbital UI present as a frame for the feature callouts.
-    (this.planet.orbitalRing.material as any).opacity = 0.18;
+    // Keep stars and atmosphere present as a soft frame for the feature callouts.
     this.planet.animatedMaterials.atmosphere.uniforms.uOpacity.value = 0.04 + p * 0.1;
 
     // Aura warmth

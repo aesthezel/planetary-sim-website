@@ -3,10 +3,10 @@ import { Reveal } from './Reveal';
 
 export function InteriorIntro() {
   return (
-    <section id="que-es" class="essence-band" aria-label="La esencia de Planetary Sim">
+    <section id="que-es" class="essence-band" aria-label={copy.interiorTitle}>
       <div class="container essence-band__inner">
         <Reveal>
-          <p class="essence-band__lead">Un pequeño universo que evoluciona a su ritmo.</p>
+          <p class="essence-band__lead">{copy.interiorLead}</p>
         </Reveal>
         <Reveal delay={0.1}>
           <ul class="essence-band__steps">

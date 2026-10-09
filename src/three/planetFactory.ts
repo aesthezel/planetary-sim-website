@@ -4,11 +4,10 @@
  * Components (from plan):
  * - Planet core: smooth sphere with softly banded toon material
  * - Water: sphere r=1.02 with custom shader
- * - Islands: 5-7 thin organic coastline and land patches
- * - Landmarks: clay mountains and tiny structures that emerge over time
+ * - Islands: 5-7 smooth clay mounds (grass + beach baked as vertex colors)
+ * - Landmarks: rounded clay hills and tiny towers that emerge over time
  * - Aura: BackSide sphere r=1.08
  * - Atmosphere: sphere r=1.15 (grows during zoom)
- * - Orbital ring: RingGeometry + sprite labels
  * - Motas: Points 40-60 + 1 clickable spark
  * - Stars: Points 800-1200
  *
@@ -19,19 +18,17 @@ import {
   Group,
   Mesh,
   SphereGeometry,
-  ConeGeometry,
-  BoxGeometry,
-  RingGeometry,
+  LatheGeometry,
+  CapsuleGeometry,
   BufferGeometry,
   Float32BufferAttribute,
   Points,
   PointsMaterial,
   MeshToonMaterial,
-  MeshBasicMaterial,
-  DoubleSide,
   Color,
   DataTexture,
   NearestFilter,
+  Vector2,
   Vector3,
   Vector4,
 } from 'three';
@@ -56,40 +53,84 @@ function mulberry32(seed: number) {
   };
 }
 
-/* ---- Four-band gradient map for soft toon shading ---- */
+/* ---- Island proportions (shared by geometry + landmarks) ---- */
+const ISLAND_BASE_RADIUS = 1.008;
+const ISLAND_DOME_HEIGHT = 0.055;
+
+function smoothstep(edge0: number, edge1: number, x: number): number {
+  const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
+/* ---- Soft toon gradient map (gentle cel bands, clay-friendly) ---- */
 function createGradientMap(): DataTexture {
   const colors = new Uint8Array([
-    48, 48, 48, 255,
-    112, 112, 112, 255,
-    190, 190, 190, 255,
+    44, 44, 44, 255,
+    96, 96, 96, 255,
+    150, 150, 150, 255,
+    205, 205, 205, 255,
     255, 255, 255, 255,
   ]);
-  const texture = new DataTexture(colors, 4, 1);
+  const texture = new DataTexture(colors, 5, 1);
   texture.magFilter = NearestFilter;
   texture.minFilter = NearestFilter;
   texture.needsUpdate = true;
   return texture;
 }
 
-function createIslandPatchGeometry(radius: number, rand: () => number): BufferGeometry {
-  const segments = 32;
-  const rings = [0.34, 0.68, 1];
+/**
+ * A single smooth clay mound per island.
+ *
+ * The patch gently domes above the waterline and sinks under it at the rim, so
+ * the coastline is a soft intersection instead of a hard floating edge. Grass
+ * and sand are baked as vertex colors, which removes the overlapping coast/land
+ * layers that produced z-fighting and dark facets.
+ */
+function createIslandGeometry(
+  radius: number,
+  rand: () => number,
+  grass: Color,
+  grassDark: Color,
+  sand: Color,
+): BufferGeometry {
+  const segments = 64;
+  const rings = 10;
   const phaseA = rand() * Math.PI * 2;
   const phaseB = rand() * Math.PI * 2;
   const phaseC = rand() * Math.PI * 2;
-  const contour = Array.from({ length: segments }, (_, i) => {
-    const angle = (i / segments) * Math.PI * 2;
-    return 1 + Math.sin(angle * 3 + phaseA) * 0.1 + Math.sin(angle * 5 + phaseB) * 0.055 + Math.sin(angle * 8 + phaseC) * 0.025;
-  });
 
-  const vertices = [0, 0, 0];
-  for (const ring of rings) {
+  // Only low-frequency harmonics: an organic silhouette with no aliased jaggies.
+  const contour = (angle: number) =>
+    1
+    + Math.sin(angle * 2 + phaseA) * 0.09
+    + Math.sin(angle * 3 + phaseB) * 0.06
+    + Math.sin(angle * 5 + phaseC) * 0.03;
+
+  const domeAt = (u: number) => ISLAND_DOME_HEIGHT * (1 - Math.pow(u, 2.4));
+
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const tmp = new Color();
+
+  positions.push(0, domeAt(0), 0);
+  colors.push(grass.r, grass.g, grass.b);
+
+  for (let ri = 1; ri <= rings; ri++) {
+    const u = ri / rings;
+    const dome = domeAt(u);
+    const beach = smoothstep(0.72, 0.96, u);
     for (let i = 0; i < segments; i++) {
       const angle = (i / segments) * Math.PI * 2;
-      const r = radius * ring * contour[i];
+      const r = radius * u * contour(angle);
       const x = Math.cos(angle) * r;
       const z = Math.sin(angle) * r;
-      vertices.push(x, -(x * x + z * z) * 0.5, z);
+      // `-0.5 r²` makes the patch hug the globe; the dome rides on top.
+      positions.push(x, dome - 0.5 * (x * x + z * z), z);
+
+      const shade = 0.5 + 0.5 * Math.sin(angle * 3 + phaseA);
+      tmp.copy(grass).lerp(grassDark, shade * 0.4);
+      tmp.lerp(sand, beach);
+      colors.push(tmp.r, tmp.g, tmp.b);
     }
   }
 
@@ -98,9 +139,9 @@ function createIslandPatchGeometry(radius: number, rand: () => number): BufferGe
     const next = (i + 1) % segments;
     indices.push(0, 1 + next, 1 + i);
   }
-  for (let ring = 1; ring < rings.length; ring++) {
-    const inner = 1 + (ring - 1) * segments;
-    const outer = 1 + ring * segments;
+  for (let ri = 1; ri < rings; ri++) {
+    const inner = 1 + (ri - 1) * segments;
+    const outer = 1 + ri * segments;
     for (let i = 0; i < segments; i++) {
       const next = (i + 1) % segments;
       indices.push(inner + i, inner + next, outer + next, inner + i, outer + next, outer + i);
@@ -108,30 +149,46 @@ function createIslandPatchGeometry(radius: number, rand: () => number): BufferGe
   }
 
   const geometry = new BufferGeometry();
-  geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
+  geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
   return geometry;
 }
 
-/* ---- Clay landmarks: mountains and tiny structures that grow over time ---- */
+/** Smooth rounded hill profile (a soft quarter-ellipse of revolution). */
+function createClayHill(radius: number, height: number, segments = 18): LatheGeometry {
+  const points: Vector2[] = [];
+  const steps = 10;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    points.push(new Vector2(
+      Math.max(radius * Math.cos((t * Math.PI) / 2), 0.0001),
+      height * Math.sin((t * Math.PI) / 2),
+    ));
+  }
+  const geometry = new LatheGeometry(points, segments);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+/* ---- Clay landmarks: smooth hills and rounded little towers ---- */
 function createIslandDetails(rand: () => number, coastRadius: number, gradientMap: DataTexture): Group {
   const details = new Group();
-  details.position.y = 0.03;
+  details.position.y = ISLAND_DOME_HEIGHT - 0.004;
 
-  // Mountains: soft clay cones that rise once the island settles.
   const mountains = new Group();
   const mountainCount = 1 + Math.floor(rand() * 2);
   for (let m = 0; m < mountainCount; m++) {
-    const height = coastRadius * (0.42 + rand() * 0.4);
-    const radius = height * (0.5 + rand() * 0.3);
+    const height = coastRadius * (0.22 + rand() * 0.18);
+    const baseRadius = height * (0.85 + rand() * 0.35);
     const mountain = new Mesh(
-      new ConeGeometry(radius, height, 6 + Math.floor(rand() * 2)),
-      new MeshToonMaterial({ color: new Color(m === 0 ? 0x8a7256 : 0x6f8a54), gradientMap }),
+      createClayHill(baseRadius, height),
+      new MeshToonMaterial({ color: new Color(m === 0 ? 0x93a06b : 0x7fa05f), gradientMap }),
     );
     const angle = rand() * Math.PI * 2;
-    const dist = coastRadius * 0.4 * rand();
-    mountain.position.set(Math.cos(angle) * dist, height / 2, Math.sin(angle) * dist);
+    const dist = coastRadius * 0.28 * rand();
+    mountain.position.set(Math.cos(angle) * dist, -0.5 * dist * dist, Math.sin(angle) * dist);
     mountain.rotation.y = rand() * Math.PI;
     mountains.add(mountain);
   }
@@ -139,19 +196,19 @@ function createIslandDetails(rand: () => number, coastRadius: number, gradientMa
   mountains.visible = false;
   details.add(mountains);
 
-  // Small clay structures: little towers that appear once the land matures.
+  // Tiny rounded clay towers (no hard-edged boxes) that appear once land matures.
   const structures = new Group();
   const structureCount = 2 + Math.floor(rand() * 3);
   for (let s = 0; s < structureCount; s++) {
-    const width = coastRadius * (0.1 + rand() * 0.07);
-    const height = width * (1.1 + rand() * 0.9);
+    const radius = coastRadius * (0.045 + rand() * 0.03);
+    const length = radius * (0.7 + rand() * 0.7);
     const structure = new Mesh(
-      new BoxGeometry(width, height, width),
-      new MeshToonMaterial({ color: new Color(0xc98a6b), gradientMap }),
+      new CapsuleGeometry(radius, length, 4, 12),
+      new MeshToonMaterial({ color: new Color(0xd39a78), gradientMap }),
     );
     const angle = rand() * Math.PI * 2;
-    const dist = coastRadius * 0.55 * rand();
-    structure.position.set(Math.cos(angle) * dist, height / 2, Math.sin(angle) * dist);
+    const dist = coastRadius * 0.42 * rand();
+    structure.position.set(Math.cos(angle) * dist, length / 2 + radius - 0.5 * dist * dist, Math.sin(angle) * dist);
     structure.rotation.y = rand() * Math.PI;
     structures.add(structure);
   }
@@ -184,7 +241,6 @@ export interface PlanetFactoryResult {
   islands: IslandData[];
   aura: Mesh;
   atmosphere: Mesh;
-  orbitalRing: Mesh;
   motas: Points;
   sparkPosition: Vector3;
   stars: Points;
@@ -226,7 +282,7 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
   group.add(planetCore);
 
   /* ---- Water ---- */
-  const waterGeo = new SphereGeometry(1.02, 72, 48);
+  const waterGeo = new SphereGeometry(1.02, 96, 64);
   const waterMat = createWaterMaterial();
   const waterMesh = new Mesh(waterGeo, waterMat);
   group.add(waterMesh);
@@ -234,13 +290,14 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
   /* ---- Islands (5-7) ---- */
   const islandCount = 5 + Math.floor(rand() * 3);
   const islands: IslandData[] = [];
-  const islandColors = [0x5c8a4c, 0x73945b, 0x68854d, 0x708f53, 0x61864d, 0x7a9654, 0x5f874b];
+  const grassPalette = [0x6f9a56, 0x7ba45f, 0x67914f, 0x759c58, 0x6a9351, 0x7ea862, 0x6d9753];
+  const sand = new Color(0xd9c49a);
 
   for (let i = 0; i < islandCount; i++) {
     const islandGroup = new Group();
 
-    // Position on sphere surface
-    const r = 1.007;
+    // Position on sphere surface, resting just above the core.
+    const r = ISLAND_BASE_RADIUS;
     const pos = i === 0
       ? new Vector3(0.28, 0.58, 0.76).normalize().multiplyScalar(r)
       : (() => {
@@ -253,26 +310,19 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
           );
         })();
 
-    // Two thin, curved layers read as a coastline and a flat organic land patch.
+    // One smooth clay mound: grass and beach baked as vertex colors.
     const coastRadius = i === 0 ? 0.22 + rand() * 0.03 : 0.18 + rand() * 0.06;
-    const coast = new Mesh(
-      createIslandPatchGeometry(coastRadius * 1.18, rand),
-      new MeshToonMaterial({ color: new Color(0xa18b69), gradientMap }),
-    );
-    coast.position.y = 0.022;
-    islandGroup.add(coast);
-
+    const grass = new Color(grassPalette[i % grassPalette.length]);
     const land = new Mesh(
-      createIslandPatchGeometry(coastRadius * 0.92, rand),
-      new MeshToonMaterial({ color: new Color(islandColors[i % islandColors.length]), gradientMap }),
+      createIslandGeometry(coastRadius, rand, grass, grass.clone().multiplyScalar(0.8), sand),
+      new MeshToonMaterial({ vertexColors: true, gradientMap }),
     );
-    land.position.y = 0.029;
     islandGroup.add(land);
 
     islandGroup.position.copy(pos);
     islandGroup.quaternion.setFromUnitVectors(new Vector3(0, 1, 0), pos.clone().normalize());
 
-    // Clay mountains and small structures grow on the land over time.
+    // Clay hills and small rounded towers grow on the land over time.
     const details = createIslandDetails(rand, coastRadius, gradientMap);
     islandGroup.add(details);
 
@@ -297,7 +347,8 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
   const islandInfo = waterMat.uniforms.uIslands.value as Vector4[];
   islands.slice(0, islandInfo.length).forEach((island, index) => {
     const direction = island.basePosition.clone().normalize();
-    islandInfo[index].set(direction.x, direction.y, direction.z, island.coastRadius * 1.18 + 0.025);
+    // The visible waterline sits at ~90% of the geometry radius.
+    islandInfo[index].set(direction.x, direction.y, direction.z, island.coastRadius * 0.9);
   });
   waterMat.uniforms.uIslandCount.value = Math.min(islands.length, islandInfo.length);
 
@@ -312,19 +363,6 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
   const atmoMat = createAtmosphereMaterial();
   const atmosphere = new Mesh(atmoGeo, atmoMat);
   group.add(atmosphere);
-
-  /* ---- Orbital ring ---- */
-  const ringGeo = new RingGeometry(1.25, 1.26, 64);
-  const ringMat = new MeshBasicMaterial({
-    color: new Color(0xc8cbdf),
-    transparent: true,
-    opacity: 0.15,
-    side: DoubleSide,
-    depthWrite: false,
-  });
-  const orbitalRing = new Mesh(ringGeo, ringMat);
-  orbitalRing.rotation.x = Math.PI * 0.5;
-  group.add(orbitalRing);
 
   /* ---- Motas (particles) ---- */
   const motaCount = 40 + Math.floor(rand() * 20);
@@ -398,7 +436,6 @@ export function createPlanet(seed = 'Mundo'): PlanetFactoryResult {
     islands,
     aura,
     atmosphere,
-    orbitalRing,
     motas,
     sparkPosition,
     stars,

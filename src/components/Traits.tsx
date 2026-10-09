@@ -7,10 +7,10 @@ export function Traits() {
       <div class="container">
         <Reveal>
           <div class="section-header">
-            <span class="section-header__label">La esencia del juego</span>
+            <span class="section-header__label">{copy.traitsLabel}</span>
             <h2 class="section-header__title">{copy.traitsTitle}</h2>
             <p class="section-header__subtitle">
-              Diseñado para ofrecer una alternativa íntima, contemplativa y estética dentro de la simulación incremental.
+              {copy.traitsSubtitle}
             </p>
           </div>
         </Reveal>
